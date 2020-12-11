@@ -1,0 +1,197 @@
+---
+title: "groundwater-model"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{groundwater-model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(nitratesgame)
+```
+
+
+---
+title: "nitrates_gw_predictions"
+author: "Gopal Penny"
+date: "10/27/2020"
+output: 
+  html_notebook:
+    toc: true
+    number_sections: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(units)
+library(sf)
+library(ggforce)
+library(patchwork)
+source("../proc/proc_nitrates_gw_model.R")
+# getwd()
+```
+
+# Groundwater model
+
+First we set some basic parameters for the scenario incuding:
+
+* Household water use
+* Seepage rate
+    + Annual precipitation
+    + Seepage fraction
+* Seepage fraction
+* Well source area
+    + radius of source area
+* Housing density
+
+```{r run_gw_model, message = FALSE}
+# Get area of hh withdrawal
+hh_annual <- set_units(76, "gallon/day") %>% # from USGS water data
+  set_units("ft^3/year") * 4
+precip_annual <- set_units(1070, "mm / year") #%>%
+seepage_fraction <- 0.4
+seepage_annual <- precip_annual * seepage_fraction
+area_of_withdrawal <- hh_annual / seepage_annual
+rs <- sqrt(area_of_withdrawal / pi) / 3 # CALIBRATED
+
+
+density <- set_units(2, "1/acre")
+```
+
+Now let's assume the top of the screened portion of the well is 10 ft below the water table surface. We further assume that the vertical velocity in the aquifer is the seepage rate divided by porosity, and that any contamination is sufficiently diluted after 5 years. This means that we can set the bottom of the well at
+
+```{r run_gw_model, message = FALSE}
+v_distance <- (seepage_annual / 0.4 * set_units(5, "year")) %>% set_units("ft") # wells are at avg depth of X but assume dilution after 5 years 
+
+xsection_df <- tibble(density = set_units(seq(0.5,3,by=0.5), "1/acre"),
+       z1_ft = 10, z2_ft = 18, rs, # 10 ft below water table surface. 18 ft represents depth of particle after 5 years
+       theta_min = 0, theta_max = pi/4, 
+       alpha_min = 0, alpha_max = 50) %>% 
+  crossing(self_treat = c(TRUE, FALSE)) %>% rowwise() %>% 
+  mutate(xsection = list(get_intersection_probability(density, z1_ft, z2_ft, rs, theta_min, theta_max, alpha_min, alpha_max, self_treat, show_progress = TRUE)))
+```
+
+## Groundwater model plots
+
+```{r message = FALSE}
+flip_wells_geometry <- function(wells) {
+  wells_flipped <- wells %>% st_coordinates() %>% as_tibble() %>%
+    mutate(Y = -Y) %>% st_as_sf(coords=c("X","Y")) %>% group_by(L2) %>% summarise(do_union=FALSE) %>%
+    st_cast("LINESTRING") %>% st_cast("POLYGON")
+  
+  return(wells_flipped)
+}
+
+# Run GW model:
+gw_example <- get_intersection_probability(density = set_units(1, "1/acre"), z1_ft = 10, z2_ft = 18, rs = rs, 
+                                           theta_min = 0, theta_max = pi/2, alpha_min = 0, alpha_max = 50, self_treat = FALSE, show_progress = FALSE)
+# Get extent of wells
+septic_grid_circles <- gw_example$septic_grid %>% filter(col >= 0, row >= 0) %>% rename(r = rs) %>% anem::gen_circles()
+
+# Plot plan view
+p_plan <- ggplot(gw_example$septic_grid %>% filter(col >= 0, row >= 0)) + 
+  geom_abline(data=data.frame(theta=seq(0,pi/2,length.out=25),intercept=0) %>% mutate(slope=tan(theta)),aes(slope=slope,intercept=intercept),alpha = 0.5) +
+  geom_point(aes(x,y, color = origin)) +
+  geom_polygon(data=septic_grid_circles,aes(x,y,group=id),fill=NA,color="black") + coord_equal() +
+  ggtitle("Wells")
+
+p_plan
+```
+
+
+```{r}
+p_phi <- ggplot(data.frame(alpha = seq(0,50,by=.1)) %>% mutate(phi = -atan(1/alpha))) + stat_density(aes(phi)) +
+  coord_flip()
+p_wells <- ggplot() + geom_sf(data=flip_wells_geometry(gw_example$wells),aes()) +
+  labs(x = "theta", y = "phi")
+gridExtra::grid.arrange(p_wells, p_phi, widths=c(0.7,0.3), top = "Wells in theta-phi space") #+ patchwork::plot_layout(widths=c(0.8,0.2))
+```
+
+# Contamination probabilities
+
+```{r prob-contamination-vs-density}
+xsection <- xsection_df %>% unnest_wider("xsection",names_sep = "_") %>%
+  mutate(p_i = map(xsection_probs, function(x) sum(x$p))) %>%
+  unnest(c("p_i")) %>%
+  dplyr::select(density, z1_ft, z2_ft, self_treat, p_i) %>%
+  mutate(self_treat = factor(self_treat, levels=c(FALSE, TRUE), labels = c("no_treatment", "self_treatment"))) %>%
+  pivot_wider(names_from = "self_treat", values_from = "p_i", names_prefix = "p_i_") %>%
+  mutate(d_p_i = p_i_no_treatment,
+         d_p_ii = p_i_no_treatment - p_i_self_treatment)
+
+# lm(d_p_i ~ density, xsection) %>% summary()
+ggplot(xsection, aes(density, d_p_i)) + geom_point() + 
+  geom_line() 
+```
+
+# Nitrogen reduction costs
+
+```{r}
+
+nitrogen_reduction_costs <- read_csv("../../data/format/nitrogen_reduction_costs.csv")
+# nitrogen_reduction_costs$ 
+
+knitr::kable(nitrogen_reduction_costs %>% dplyr::select(System = system, Cost = min_system_cost))
+```
+
+
+# Social dilemmas?
+
+```{r}
+house_contamination_devaluation_pct <- 0.04
+cost_of_upgraded_septic <- 1e4
+costs_and_probs <- tibble(density = set_units(seq(min(xsection$density), max(xsection$density), by = 0.01), "1/acre")) %>%
+  mutate(d_p_i = approx(xsection$density, xsection$d_p_i, xout = density)$y) %>%
+  crossing(house_price = seq(0, 1e6,length.out = 500)) %>%
+  mutate(C_x = house_price * house_contamination_devaluation_pct,
+         C_sigma = cost_of_upgraded_septic,
+         collective_motivation = d_p_i * C_x - C_sigma)
+costs_and_probs_threshold <- costs_and_probs %>% 
+  rename(x = density, y = house_price, z = collective_motivation) %>% 
+  anem::get_contourlines( levels = 0)
+
+
+ggplot(costs_and_probs) + geom_raster(aes(density, house_price, fill = collective_motivation)) +
+  geom_path(data=costs_and_probs_threshold,aes(x,y,group = line)) +
+  scale_fill_gradient2("Benefit of\ncollective action\nto upgrade septic") +
+  scale_y_continuous("Home price, $",label=scales::label_number_si()) +
+  labs(x="Housing_density",
+       caption = paste0("Potential social dilemma with cost of contamination ",house_contamination_devaluation_pct*100,"% of home value,\n",
+                        "and the cost of upgraded septic is $",format(cost_of_upgraded_septic,big.mark = ",")))
+```
+
+```{r}
+house_contamination_devaluation_pct <- 0.06
+cost_of_upgraded_septic <- 5e3
+costs_and_probs <- tibble(density = set_units(seq(min(xsection$density), max(xsection$density), by = 0.01), "1/acre")) %>%
+  mutate(d_p_i = approx(xsection$density, xsection$d_p_i, xout = density)$y) %>%
+  crossing(house_price = seq(0, 1e6,length.out = 500)) %>%
+  mutate(C_x = house_price * house_contamination_devaluation_pct,
+         C_sigma = cost_of_upgraded_septic,
+         collective_motivation = d_p_i * C_x - C_sigma)
+costs_and_probs_threshold <- costs_and_probs %>% 
+  rename(x = density, y = house_price, z = collective_motivation) %>% 
+  anem::get_contourlines( levels = 0)
+
+
+ggplot(costs_and_probs) + geom_raster(aes(density, house_price, fill = collective_motivation)) +
+  geom_path(data=costs_and_probs_threshold,aes(x,y,group = line)) +
+  scale_fill_gradient2("Benefit of\ncollective action\nto upgrade septic") +
+  scale_y_continuous("Home price, $",label=scales::label_number_si()) +
+  labs(x="Housing_density",
+       caption = paste0("Potential social dilemma with cost of contamination ",house_contamination_devaluation_pct*100,"% of home value,\n",
+                        "and the cost of upgraded septic is $",format(cost_of_upgraded_septic,big.mark = ",")))
+```

@@ -209,7 +209,7 @@ shift_hh_grid_pi <- function(septic_grid, theta_min = -pi, theta_max = pi) {
                         septic_grid$well_rect[septic_grid$theta1 < -pi] + st_pi*2)
 
   domain <- get_well_rectangle(theta_min, theta_max, 0, pi/2)
-  wells <- st_intersection(wells_rectangles, domain)
+  wells <- sf::st_intersection(wells_rectangles, domain)
 
   return(wells)
 }

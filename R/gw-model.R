@@ -3,10 +3,10 @@
 
 # nitrate_gw_model.R
 
-require(tidyverse)
-require(units)
-require(sf)
-library(ggforce)
+# require(tidyverse)
+# require(units)
+# require(sf)
+# library(ggforce)
 
 #' OLD & OUTDATED #' Get probability of contamination
 #' #'
@@ -53,40 +53,89 @@ get_well_rectangle <- function(theta1, theta2, phi1, phi2) {
 
 #' Get household grid
 #'
-#' @param density housing density as a units object with units [1/acre]
-#' @param z1_ft depth from the water table surface to the top of the well in ft
-#' @param z2_ft depth from the water table surface to the bottom of the well in ft
-#' @param rs radius of the well source area
+#' @param density housing density as a units object with units [1/area]
+#' @param area total area of area as an object with units [acre]
 #' @details
-# Create an mxm grid of septic fields around a well at m/2,m/2.
-get_hh_grid <- function(density, z1_ft, z2_ft, rs) {
+#' Create a grid of septic fields around a well at (x = 0, y = 0). If the grid
+#' length is even-numbered, the final row and column are place at positive x and y.
+#' @examples
+#' library(units)
+#' density <- set_units(0.25,"1/acre")
+#' area <- set_units(64,"acre")
+#' hh_grid <- get_hh_grid(density,area)
+#'
+#' library(ggplot2)
+#' library(ggforce) # ggforce allows units objects for the axes
+#' ggplot(hh_grid) +
+#'   geom_point(aes(x, y)) +
+#'   geom_point(aes(0, 0), color = "red", size = 3, shape = 1)
+get_hh_grid <- function(density, area) {
   # Create mxm grid of septic fields around a well at m/2,m/2.
   # The total number of wells (N) determined by the number of houses in 9 connected pixels
-  N <- as.numeric(density * units::set_units(16, "acre") * 9)
+  density_acre <- units::set_units(density, "1/acre")
+  N <- as.numeric(density_acre * units::set_units(area, "acre"))
   m <- round(sqrt(N))
 
-  l <- (1/density) %>% set_units("ft^2") %>% sqrt() # l is length of square of each property
+  l <- (1/density) %>% units::set_units("ft^2") %>% sqrt() # l is length of square of each property
 
   hh_grid <- expand.grid(col=seq(-ceiling(m/2)+1,m/2),row=seq(-ceiling(m/2)+1,m/2)) %>%
     mutate(x = col * l,
-           y = row * l,
+           y = row * l)
+
+  return(hh_grid)
+}
+
+#' Get septic well array
+#'
+#' Get virtual wells corresponding to septic systems
+#' @param hh_array array of septic or well systems with coordinates [x, y] as units objects
+#' @param hh_array_type either "septic" or "well" describing the \code{hh_array}. See Details below.
+#' @param z_range units vector of length 2 representing depth from the water table surface to the top and bottom of the well
+#' @param rs units object representing the radius of the well source area
+#' @details
+#' This function prepares an array of septic systems or private wells for the groundwater model function
+#' \code{get_intersection_probability()}. If the goals is to calculate the probability that a well is
+#' contaminated by a set of septic systems, then \code{hh_array} represents septic systems and \code{hh_array_type}
+#' should be set to "septic". Alternatively, if the goal is to calculate the probability that a single
+#' septic system contaminates a set of wells, then \code{hh_array} should represent a set of wells and
+#' \code{hh_array_type} should be set to "wells".
+#' This function translates a set of point-source septic fields that might contaminate a well
+#' into a set of virtual wells to use with \code{get_intersection_probability()}.
+#'
+#' This function takes as input an array of septic systems with (x,y) coordinates
+#' where (0,0) is the location of the domestic well. In order
+#' to calculate the probability of a septic system contaminating a well, the septic
+#' system is treated as a virtual well identical to the actual well and located
+#' directly opposite original septic system at (-xi, -yi). In other words, the septic
+#' array is translated to a well array rotated 180 degrees around the domestic well.
+#' The problem of determining contamination can then be treated by considering the probability
+#' that a particle introduced at (0,0) will intersect the virtual wells at (-xi, -yi)
+#' @examples
+#' library(units)
+#' hh_array <- get_hh_grid(density = set_units(0.25,"1/acre"), area = set_units(64,"acre"))
+#' z_range <- set_units(c(10, 18),"ft")
+#' rs <- set_units(10, "ft")
+#' virtual_well_array <- get_septic_well_array(hh_array, z_range, rs)
+get_septic_well_array <- function(hh_array, z_range, rs) {
+
+  virtual_well_grid <- hh_array %>%
+    mutate(x = -x,
+           y = -y,
            rij = sqrt(x^2 + y^2),
            rs = rs,
-           z1 = set_units(z1_ft,"ft"),
-           z2 = set_units(z2_ft,"ft"),
+           z1 = units::set_units(z_range[1],"ft"),
+           z2 = units::set_units(z_range[2],"ft"),
            theta = as.numeric(atan2(y, x)),
-           dtheta = atan(as.numeric(rs/rij)),
+           dtheta = atan(as.numeric(rs/rij)), # this is the width of the well
            origin = ifelse(as.numeric(x) == 0, as.numeric(y) == 0, FALSE),
            theta1 = ifelse(origin, -pi, theta - dtheta),
            theta2 = ifelse(origin, pi, theta + dtheta),
            phi1 = ifelse(origin, as.numeric(atan(z1 / rs)), as.numeric(atan(z1 / rij))),
-           phi2 = ifelse(origin, pi/2, as.numeric(atan(z2 / rij)))) %>% as_tibble()
-
-  septic_grid <- hh_grid %>%
+           phi2 = ifelse(origin, pi/2, as.numeric(atan(z2 / rij)))) %>% as_tibble() %>%
     rowwise() %>%
     mutate(well_rect = get_well_rectangle(theta1, theta2, phi1, phi2))
 
-  return(septic_grid)
+  return(virtual_well_grid)
 
 }
 
@@ -213,7 +262,7 @@ get_union_probability <- function(wells, theta_min = -pi, theta_max = pi, alpha_
 
 }
 
-
+#' Get intersection probability
 get_intersection_probability <- function(density, z1_ft, z2_ft, rs, theta_min = -pi, theta_max = pi, alpha_min = 0, alpha_max = 100, self_treat = FALSE, show_progress = TRUE) {
   septic_grid <- get_hh_grid(density, z1_ft, z2_ft, rs)
   if (self_treat) {

@@ -40,7 +40,6 @@ library(units)
 library(sf)
 library(ggforce)
 library(patchwork)
-source("../proc/proc_nitrates_gw_model.R")
 # getwd()
 ```
 
@@ -71,12 +70,26 @@ rs <- sqrt(area_of_withdrawal / pi) / 3 # CALIBRATED
 density <- set_units(2, "1/acre")
 ```
 
-Now let's assume the top of the screened portion of the well is 10 ft below the water table surface. We further assume that the vertical velocity in the aquifer is the seepage rate divided by porosity, and that any contamination is sufficiently diluted after 5 years. This means that we can set the bottom of the well at
+Now let's assume the top of the screened portion of the well is 10 ft below the water table surface. We further assume that the vertical velocity in the aquifer is the seepage rate divided by porosity, and that any contamination is sufficiently diluted after 5 years. This means that we can set the bottom of the well at `v_distance`.
 
 ```{r run_gw_model, message = FALSE}
-v_distance <- (seepage_annual / 0.4 * set_units(5, "year")) %>% set_units("ft") # wells are at avg depth of X but assume dilution after 5 years 
+v_distance <- (seepage_annual / 0.4 * set_units(5, "year")) %>% set_units("ft") # wells are at avg depth of X but assume dilution after 5 years
+```
 
-xsection_df <- tibble(density = set_units(seq(0.5,3,by=0.5), "1/acre"),
+SO... now we need a function that generates a grid of wells. Or you can create the grid yourself.
+
+#' Get septic well array
+get_septic_well_array <- function() {
+
+}
+
+```{r}
+
+```
+
+
+```{r run_gw_model, message = FALSE}
+xsection_df <- tibble(density = set_units(seq(0.5,1,by=0.5), "1/acre"),
        z1_ft = 10, z2_ft = 18, rs, # 10 ft below water table surface. 18 ft represents depth of particle after 5 years
        theta_min = 0, theta_max = pi/4, 
        alpha_min = 0, alpha_max = 50) %>% 

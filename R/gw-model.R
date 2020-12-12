@@ -214,6 +214,16 @@ shift_hh_grid_pi <- function(septic_grid, theta_min = -pi, theta_max = pi) {
   return(wells)
 }
 
+#' Fip z geometry
+#' @param wells A data.frame containing
+flip_wells_vertically <- function(wells) {
+  wells_flipped <- wells %>% sf::st_coordinates() %>% tibble::as_tibble() %>%
+    dplyr::mutate(Y = -Y) %>% sf::st_as_sf(coords=c("X","Y")) %>% dplyr::group_by(L2) %>% dplyr::summarise(do_union=FALSE) %>%
+    sf::st_cast("LINESTRING") %>% sf::st_cast("POLYGON")
+
+  return(wells_flipped)
+}
+
 
 
 #' Get probability of contamination
@@ -314,6 +324,12 @@ get_union_probability <- function(wells, theta_min = -pi, theta_max = pi, alpha_
 }
 
 #' Get intersection probability
+#'
+#' @param wells_array Wells object prepared with get_septic_wells_array
+#' @param theta_range Vector describing the min and max of the uniform distribution for the mean lateral direction of flow
+#' @param alpha_range Vector describing the min and max of distance to the groundwater divide
+#' @param include_self Logical. If FALSE, any well at (x = 0, y = 0) will be removed
+#' @param show_progress Logical that determines if progress bar is shown
 get_intersection_probability <- function(density, z1_ft, z2_ft, rs, theta_min = -pi, theta_max = pi, alpha_min = 0, alpha_max = 100, self_treat = FALSE, show_progress = TRUE) {
   septic_grid <- get_hh_grid(density, z1_ft, z2_ft, rs)
   if (self_treat) {

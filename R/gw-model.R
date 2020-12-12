@@ -55,6 +55,7 @@ get_well_rectangle <- function(theta1, theta2, phi1, phi2) {
 #'
 #' @param density housing density as a units object with units [1/area]
 #' @param area total area of area as an object with units [acre]
+#' @export
 #' @details
 #' Create a grid of septic fields around a well at (x = 0, y = 0). If the grid
 #' length is even-numbered, the final row and column are place at positive x and y.
@@ -87,29 +88,28 @@ get_hh_grid <- function(density, area) {
 
 #' Get septic well array
 #'
-#' Get virtual wells corresponding to septic systems
-#' @param hh_array array of septic or well systems with coordinates [x, y] as units objects
+#' @param hh_array array of septic or well systems with coordinates [x, y] as units objects and (optionally) z1, z2, rs
 #' @param hh_array_type either "septic" or "well" describing the \code{hh_array}. See Details below.
-#' @param z_range units vector of length 2 representing depth from the water table surface to the top and bottom of the well
-#' @param rs units object representing the radius of the well source area
-#' @details
+#' @param ... See details for optional inputs
+#' @export
+#' @description
 #' This function prepares an array of septic systems or private wells for the
-#' groundwater model function \code{get_intersection_probability()}. The
+#' groundwater model function \code{get_intersection_probability()}. This
 #' function takes as input an array of septic systems or wells with (x,y)
 #' coordinates where (0,0) is the location of the domestic well.
 #'
 #' Option 1:
 #'
-#' If the goal is to calculate the probability that a single septic system
-#' contaminates any well within a set of wells, then \code{hh_array} should
+#' If the goal is to calculate the probability that a single septic system at (0,0)
+#' contaminates any well within a set of wells at (x, y), then \code{hh_array} should
 #' represent a set of wells and \code{hh_array_type} should be set to "wells".
-#' In this case, the locations in \code{hh_array} are kept and each one is
+#' In this case, the x-y locations in \code{hh_array} are kept and each well is
 #' parameterized with with a \code{well_rect}.
 #'
 #' Option 2:
 #'
-#' Alternatively, if the goals is to calculate the probability that a single
-#' well is contaminated by any septic system within a set of septic systems,
+#' Alternatively, if the goal is to calculate the probability that a single
+#' well at (0,0) is contaminated by any of a set of septic systems at (x, y),
 #' then \code{hh_array} represents septic systems and \code{hh_array_type}
 #' should be set to "septic". In this case, the function translates a set of
 #' point-source septic fields that might contaminate the well into a set of
@@ -122,6 +122,12 @@ get_hh_grid <- function(density, area) {
 #' domestic well. The problem of determining contamination can then be treated
 #' by considering the probability that a particle introduced at (0,0) will
 #' intersect the virtual wells at (-xi, -yi).
+#' @details
+#' Optial input in \code{...} can include:
+#' \itemize{
+#' \item code{z_range}: units vector of length 2 representing depth from the water table surface to the top and bottom of the well
+#' \item \code{rs}: units object representing the radius of the well source area
+#' }
 #' @examples
 #' # Generate household array
 #' library(units)
@@ -131,10 +137,19 @@ get_hh_grid <- function(density, area) {
 #' rs <- set_units(10, "ft")
 #'
 #' # Option 1: Prepare array of wells -- see Details
-#' virtual_well_array <- get_septic_well_array(hh_array, "well", z_range, rs)
+#' wells <- get_septic_well_array(hh_array, "well", z_range = z_range, rs = rs)
+#'
+#' # plot the array of wells
+#' library(ggplot2)
+#' library(ggforce) # needed to plot axes using units objects
+#' ggplot(mapping = aes(x, y, color = id)) +
+#'   geom_point(data = hh_array, aes(shape = "hh_array"), size = 4, stroke = 1) +
+#'   geom_point(data = wells, aes(shape = "wells"), size = 2) +
+#'   scale_shape_manual(values = c(1, 16)) +
+#'   scale_color_viridis_c(option = "B")
 #'
 #' # Option 2: Prepare array of virtual wells -- see Details
-#' virtual_well_array <- get_septic_well_array(hh_array, "septic", z_range, rs)
+#' virtual_well_array <- get_septic_well_array(hh_array, "septic", z_range = z_range, rs = rs)
 #'
 #' # plot the flipped array of virtual wells
 #' library(ggplot2)
@@ -144,7 +159,8 @@ get_hh_grid <- function(density, area) {
 #'   geom_point(data = virtual_well_array, aes(shape = "virtual wells"), size = 2) +
 #'   scale_shape_manual(values = c(1, 16)) +
 #'   scale_color_viridis_c(option = "B")
-get_septic_well_array <- function(hh_array, hh_array_type, z_range, rs) {
+get_septic_well_array <- function(hh_array, hh_array_type, ...) {
+  params <- list(...)
 
   if (all(grepl("[sS]eptic",hh_array_type))) {
     coord_flip <- -1
@@ -154,13 +170,25 @@ get_septic_well_array <- function(hh_array, hh_array_type, z_range, rs) {
     stop("hh_array_type is ",hh_array_type," but must be either \"septic\" or \"well\"")
   }
 
-  # wells <- tibble::as_tibble(hh_array)
-  # wells$x <- coord_flip * wells$x
-  # wells$y <- coord_flip * wells$y
-  # wells$rij <- sqrt(wells$x^2 + wells$y^2)
-  # wells$rs <- rs
-  # wells$z1 <- units::set_units(z_range[1],"ft")
-  # wells$z2 <- units::set_units(z_range[2],"ft")
+  if ("z_range" %in% names(params)) {
+    hh_array$z1 <- params$z_range[1]
+    hh_array$z2 <- params$z_range[2]
+  } else if (!("z_range" %in% names(hh_array))) {
+    stop("z1 and z2 must be columns in hh_array or specified in ... by z_range")
+  }
+  if ("rs" %in% names(params)) {
+    hh_array$rs <- params$rs
+  } else if (!("rs" %in% names(hh_array))) {
+    stop("rs must be a column in hh_array or specified in ... by rs")
+  }
+
+  wells <- tibble::as_tibble(hh_array)
+  wells$x <- coord_flip * wells$x
+  wells$y <- coord_flip * wells$y
+  wells$rij <- sqrt(wells$x^2 + wells$y^2)
+  wells$rs <- rs
+  wells$z1 <- units::set_units(z_range[1],"ft")
+  wells$z2 <- units::set_units(z_range[2],"ft")
   # wells$theta <- as.numeric(atan2(wells$y, wells$x))
   # wells$dtheta <- atan(as.numeric(wells$rs/wells$rij)) # this is the width of the well
   # wells$origin <- ifelse(as.numeric(wells$x) == 0, as.numeric(wells$y) == 0, FALSE)
@@ -170,20 +198,14 @@ get_septic_well_array <- function(hh_array, hh_array_type, z_range, rs) {
   # wells$phi2 <- ifelse(wells$origin, pi/2, as.numeric(atan(wells$z2 / wells$rij)))
   # wells$well_rect <- mapply(get_well_rectangle,theta1 = wells$theta1, theta2 = wells$theta2, phi1 = wells$phi1, phi2 = wells$phi2)
 
-  wells <- hh_array %>%
-    dplyr::mutate(x = coord_flip * x,
-           y = coord_flip * y,
-           rij = sqrt(x^2 + y^2),
-           rs = rs,
-           z1 = units::set_units(z_range[1],"ft"),
-           z2 = units::set_units(z_range[2],"ft"),
-           theta = as.numeric(atan2(y, x)),
-           dtheta = atan(as.numeric(rs/rij)), # this is the width of the well
-           origin = ifelse(as.numeric(x) == 0, as.numeric(y) == 0, FALSE),
-           theta1 = ifelse(origin, -pi, theta - dtheta),
-           theta2 = ifelse(origin, pi, theta + dtheta),
-           phi1 = ifelse(origin, as.numeric(atan(z1 / rs)), as.numeric(atan(z1 / rij))),
-           phi2 = ifelse(origin, pi/2, as.numeric(atan(z2 / rij)))) %>% tibble::as_tibble() %>%
+  wells <- wells %>%
+    dplyr::mutate(theta = as.numeric(atan2(y, x)),
+                  dtheta = atan(as.numeric(rs/rij)), # this is the width of the well
+                  origin = ifelse(as.numeric(x) == 0, as.numeric(y) == 0, FALSE),
+                  theta1 = ifelse(origin, -pi, theta - dtheta),
+                  theta2 = ifelse(origin, pi, theta + dtheta),
+                  phi1 = ifelse(origin, as.numeric(atan(z1 / rs)), as.numeric(atan(z1 / rij))),
+                  phi2 = ifelse(origin, pi/2, as.numeric(atan(z2 / rij)))) %>% tibble::as_tibble() %>%
     dplyr::rowwise() %>%
     dplyr::mutate(well_rect = get_well_rectangle(theta1, theta2, phi1, phi2))
 
@@ -195,18 +217,18 @@ get_septic_well_array <- function(hh_array, hh_array_type, z_range, rs) {
 
 #' Shift rectangle polygons to fall within [-pi, pi]
 #'
-#' @param septic_grid septic_grid is a data.freame containing well_rect column populated by get_well_rectangle
-#' @param theta_min minimum theta over which to clip output
-#' @param theta_max maximum theta over which to clip output
+#' @inheritParams get_intersection_probability
 #' @details
 #' Shift all well rectangles by ±2pi and clip to the range \code{[theta_min, theta_max]}. These theta values
 #' don't necessarily need to be the extremes [-pi, pi] and can be any subset of that range.
-shift_hh_grid_pi <- function(septic_grid, theta_min = -pi, theta_max = pi) {
+shift_hh_grid_pi <- function(wells_array, theta_range = c(-pi, pi)) {
+  theta_min <- theta_range[1]
+  theta_max <- theta_range[2]
   st_pi <- sf::st_as_sf(data.frame(theta=pi,phi=0), coords =  c("theta","phi")) %>% st_geometry() # sf object representing pi
 
-  wells_rectangles <- c(septic_grid$well_rect,
-                        septic_grid$well_rect[septic_grid$theta2 > pi] - st_pi*2, # shift any object that cross pi or -pi by 2 pi
-                        septic_grid$well_rect[septic_grid$theta1 < -pi] + st_pi*2)
+  wells_rectangles <- c(wells_array$well_rect,
+                        wells_array$well_rect[wells_array$theta2 > pi] - st_pi*2, # shift any object that cross pi or -pi by 2 pi
+                        wells_array$well_rect[wells_array$theta1 < -pi] + st_pi*2)
 
   domain <- get_well_rectangle(theta_min, theta_max, 0, pi/2)
   wells <- sf::st_intersection(wells_rectangles, domain)
@@ -214,29 +236,17 @@ shift_hh_grid_pi <- function(septic_grid, theta_min = -pi, theta_max = pi) {
   return(wells)
 }
 
-#' Fip z geometry
-#' @param wells A data.frame containing
-flip_wells_vertically <- function(wells) {
-  wells_flipped <- wells %>% sf::st_coordinates() %>% tibble::as_tibble() %>%
-    dplyr::mutate(Y = -Y) %>% sf::st_as_sf(coords=c("X","Y")) %>% dplyr::group_by(L2) %>% dplyr::summarise(do_union=FALSE) %>%
-    sf::st_cast("LINESTRING") %>% sf::st_cast("POLYGON")
-
-  return(wells_flipped)
-}
-
-
 
 #' Get probability of contamination
 #'
-#' @param wells
-#' @param theta_min
-#' @param theta_max
-#' @param alpha_min
-#' @param alpha_max
-#' CAREFUL WON'T WORK IF [theta_min, theta_max] CROSSES OVER -pi or pi
-get_union_probability <- function(wells, theta_min = -pi, theta_max = pi, alpha_min = 0, alpha_max = 100, show_progress = TRUE) {
-  # theta_min <- theta_range[1]
-  # theta_min <- theta_range[2]
+#' @inheritParams get_intersection_probability
+#' @details
+#' Careful: this won't work if theta_range cross over -pi or pi
+get_union_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_range = c(0, 100), show_progress = TRUE) {
+  theta_min <- theta_range[1]
+  theta_min <- theta_range[2]
+  alpha_min <- alpha_range[1]
+  alpha_max <- alpha_range[2]
   wells_union <- st_union(wells)
 
   # this line removes points where more than 2 points make a line. Points are removed
@@ -330,14 +340,23 @@ get_union_probability <- function(wells, theta_min = -pi, theta_max = pi, alpha_
 #' @param alpha_range Vector describing the min and max of distance to the groundwater divide
 #' @param include_self Logical. If FALSE, any well at (x = 0, y = 0) will be removed
 #' @param show_progress Logical that determines if progress bar is shown
-get_intersection_probability <- function(density, z1_ft, z2_ft, rs, theta_min = -pi, theta_max = pi, alpha_min = 0, alpha_max = 100, self_treat = FALSE, show_progress = TRUE) {
-  septic_grid <- get_hh_grid(density, z1_ft, z2_ft, rs)
-  if (self_treat) {
-    septic_grid <- septic_grid %>% filter(as.numeric(rij) > 0)
+#' @export
+#' @details
+#' Note that theta_range must not cross -pi or pi.
+#' @return
+#' Returns a list containing the well array after clipping and shifting and probabilities of contamination
+#' @examples
+get_intersection_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_range = c(0, 100), self_treat = FALSE, show_progress = TRUE) {
+  if (max(theta_range) > pi | max(theta_range) < -pi) {
+    stop("theta_range must not cross -pi or pi")
   }
-  wells <- shift_hh_grid_pi(septic_grid, theta_min, theta_max = theta_max)
-  probs <- get_union_probability(wells, theta_min = theta_min, theta_max = theta_max, alpha_min = alpha_min, alpha_max = alpha_max, show_progress = show_progress)
-  return(list(septic_grid=septic_grid, probs=probs, wells = wells))
+
+  if (self_treat) {
+    wells_array <- wells_array %>% filter(as.numeric(rij) > 0)
+  }
+  wells_array <- shift_hh_grid_pi(wells_array, theta_range = theta_range)
+  probs <- get_union_probability(wells, theta_range = theta_range, alpha_range = alpha_range, show_progress = show_progress)
+  return(list(wells_array=wells_array, probs=probs, wells = wells))
 }
 
 

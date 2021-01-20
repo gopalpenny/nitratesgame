@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r load-package}
 library(nitratesgame)
 ```
 
@@ -45,7 +45,7 @@ library(patchwork)
 
 # Groundwater model
 
-First we set some basic parameters for the scenario incuding:
+First we set some basic parameters for the scenario including:
 
 * Household water use
 * Seepage rate
@@ -70,11 +70,12 @@ rs <- sqrt(area_of_withdrawal / pi) / 3 # CALIBRATED
 density <- set_units(0.5, "1/acre")
 ```
 
-Now let's assume the top of the screened portion of the well is 10 ft below the water table surface. We further assume that the vertical velocity in the aquifer is the seepage rate divided by porosity, and that any contamination is sufficiently diluted after 5 years. This means that we can set the bottom of the well at `v_distance`.
+Now let's assume the top of the screened portion of the well is 10 ft below the water table surface. We further assume that the vertical velocity in the aquifer is the seepage rate divided by porosity, and that any contamination is sufficiently diluted after 5 years. This means that we can set the bottom of the well at `z2`.
 
-```{r run_gw_model, message = FALSE}
-z_top <- set_units(10,"ft")
-z_bottom <- (seepage_annual / 0.4 * set_units(5, "year")) %>% set_units("ft") # wells are at avg depth of X but assume dilution after 5 years
+```{r prep-well-depth, message = FALSE}
+z1 <- set_units(10,"ft")
+z2 <- (seepage_annual / 0.4 * set_units(5, "year")) %>% 
+  set_units("ft") # wells are at avg depth of X but assume dilution after 5 years
 ```
 
 Now we need a grid of septic systems. You can create an array of wells yourself or use `get_hh_grid`. The inputs to `get_hh_grid` are `density` and `area` as units objects.
@@ -89,12 +90,12 @@ hh_array$id <- 1:nrow(hh_array) # supply an id
 The groundwater model predicts the probability that a point source will contaminate at least one well in an array of wells. However, in this case we are interested in the probability that an array of septic fields (considered point sources) will lead to contamination in a single well. This problem can be modeled using `get_intersection_probability` by considering the well as a point source and the septic systems as "virtual wells" such that the spatial relationship between a well and septic system (point source) is the same as the relationship between the virtual well and well (now considered the point source). The function `get_septic_well_array` does this job for us. See the `?get_septic_well_array` for details.
 
 ```{r}
-virtual_well_array <- get_septic_well_array(hh_array, "septic", z_range = c(z_top, z_bottom), rs = rs)
+virtual_well_array <- get_septic_well_array(hh_array, "septic", z_range = c(z1, z2), rs = rs)
 ```
 
 Here you can see that the virtual well array is identical to the septic array but rotated by 180 degrees.
 
-```{r}
+```{r fig.width = 6}
 library(ggplot2)
 library(ggforce) # needed to plot axes using units objects
 ggplot(mapping = aes(x, y, color = id)) +
@@ -106,16 +107,24 @@ ggplot(mapping = aes(x, y, color = id)) +
 
 The array `virtual_well_array` contains sf geometries for each of the wells in $\theta-\phi$ space. We can plot these geometries projected onto the z-axis such that it appears as viewed from the point source at the land surface. To do so we can take $z_{projected}=\sin(\phi)$ and plot using `geom_rect` from `ggplot`. We zoom in only on $\theta \in [0,pi/2]$.
 
-```{r}
-ggplot(virtual_well_array) + 
+```{r fig.width = 6}
+p_wells <- ggplot(virtual_well_array) + 
   geom_rect(aes(xmin = theta1, xmax = theta2, ymin = sin(phi1), ymax = sin(phi2), fill = id), color = NA, alpha = 1) +
   scale_fill_viridis_c("id") +
-  scale_y_reverse() + 
+  scale_y_reverse("sin(phi)") + 
   scale_x_continuous(breaks = c(0, pi/2), labels = c("0", "pi/2")) +
-  coord_equal(xlim = c(0, pi/2))
+  coord_cartesian(xlim = c(0, pi/2))
+
+p_phi <- ggplot(data.frame(alpha = seq(0,50,by=.1)) %>% dplyr::mutate(phi = atan(1/alpha))) + 
+  stat_density(aes(sin(phi))) +
+  scale_x_reverse("sin(phi)") + 
+  coord_flip()
+p_wells + p_phi + patchwork::plot_layout(widths=c(0.8,0.2))
 ```
 
 
+
+```{r}
 # ```{r run_gw_model, message = FALSE}
 # xsection_df <- tibble(density = set_units(seq(0.5,1,by=0.5), "1/acre"),
 #        z1_ft = 10, z2_ft = 18, rs, # 10 ft below water table surface. 18 ft represents depth of particle after 5 years
@@ -125,111 +134,112 @@ ggplot(virtual_well_array) +
 #   mutate(xsection = list(get_intersection_probability(density, z1_ft, z2_ft, rs, theta_min, theta_max, alpha_min, alpha_max, self_treat, show_progress = TRUE)))
 # ```
 
-```{r}
+```
 
+## Get probability
+
+```{r}
+gw_example <- virtual_well_array %>%
+  get_intersection_probability(theta_range = c(0,pi/2), alpha_range = c(0, 50),
+                               self_treat = FALSE, show_progress = FALSE)
+gw_example
 ```
 
 
 ## Groundwater model plots
 
 ```{r message = FALSE}
-# Run GW model:
-gw_example <- get_intersection_probability(density = set_units(1, "1/acre"), z1_ft = 10, z2_ft = 18, rs = rs, 
-                                           theta_min = 0, theta_max = pi/2, alpha_min = 0, alpha_max = 50, self_treat = FALSE, show_progress = FALSE)
-# Get extent of wells
-septic_grid_circles <- gw_example$septic_grid %>% filter(col >= 0, row >= 0) %>% rename(r = rs) %>% anem::gen_circles()
-
-# Plot plan view
-p_plan <- ggplot(gw_example$septic_grid %>% filter(col >= 0, row >= 0)) + 
-  geom_abline(data=data.frame(theta=seq(0,pi/2,length.out=25),intercept=0) %>% mutate(slope=tan(theta)),aes(slope=slope,intercept=intercept),alpha = 0.5) +
-  geom_point(aes(x,y, color = origin)) +
-  geom_polygon(data=septic_grid_circles,aes(x,y,group=id),fill=NA,color="black") + coord_equal() +
-  ggtitle("Wells")
-
-p_plan
+# # Run GW model:
+# gw_example <- virtual_well_array %>%
+#   get_intersection_probability(theta_range = c(0,pi/2), alpha_range = c(0, 50),
+#                                self_treat = FALSE, show_progress = FALSE)
+# # Get extent of wells
+# septic_grid_circles <- gw_example$septic_grid %>% filter(col >= 0, row >= 0) %>% rename(r = rs) %>% anem::gen_circles()
+# 
+# # Plot plan view
+# p_plan <- ggplot(gw_example$septic_grid %>% filter(col >= 0, row >= 0)) + 
+#   geom_abline(data=data.frame(theta=seq(0,pi/2,length.out=25),intercept=0) %>% mutate(slope=tan(theta)),aes(slope=slope,intercept=intercept),alpha = 0.5) +
+#   geom_point(aes(x,y, color = origin)) +
+#   geom_polygon(data=septic_grid_circles,aes(x,y,group=id),fill=NA,color="black") + coord_equal() +
+#   ggtitle("Wells")
+# 
+# p_plan
 ```
 
 
-```{r}
-p_phi <- ggplot(data.frame(alpha = seq(0,50,by=.1)) %>% mutate(phi = -atan(1/alpha))) + stat_density(aes(phi)) +
-  coord_flip()
-p_wells <- ggplot() + geom_sf(data=flip_wells_geometry(gw_example$wells),aes()) +
-  labs(x = "theta", y = "phi")
-gridExtra::grid.arrange(p_wells, p_phi, widths=c(0.7,0.3), top = "Wells in theta-phi space") #+ patchwork::plot_layout(widths=c(0.8,0.2))
-```
 
 # Contamination probabilities
 
 ```{r prob-contamination-vs-density}
-xsection <- xsection_df %>% unnest_wider("xsection",names_sep = "_") %>%
-  mutate(p_i = map(xsection_probs, function(x) sum(x$p))) %>%
-  unnest(c("p_i")) %>%
-  dplyr::select(density, z1_ft, z2_ft, self_treat, p_i) %>%
-  mutate(self_treat = factor(self_treat, levels=c(FALSE, TRUE), labels = c("no_treatment", "self_treatment"))) %>%
-  pivot_wider(names_from = "self_treat", values_from = "p_i", names_prefix = "p_i_") %>%
-  mutate(d_p_i = p_i_no_treatment,
-         d_p_ii = p_i_no_treatment - p_i_self_treatment)
-
-# lm(d_p_i ~ density, xsection) %>% summary()
-ggplot(xsection, aes(density, d_p_i)) + geom_point() + 
-  geom_line() 
+# xsection <- xsection_df %>% unnest_wider("xsection",names_sep = "_") %>%
+#   mutate(p_i = map(xsection_probs, function(x) sum(x$p))) %>%
+#   unnest(c("p_i")) %>%
+#   dplyr::select(density, z1_ft, z2_ft, self_treat, p_i) %>%
+#   mutate(self_treat = factor(self_treat, levels=c(FALSE, TRUE), labels = c("no_treatment", "self_treatment"))) %>%
+#   pivot_wider(names_from = "self_treat", values_from = "p_i", names_prefix = "p_i_") %>%
+#   mutate(d_p_i = p_i_no_treatment,
+#          d_p_ii = p_i_no_treatment - p_i_self_treatment)
+# 
+# # lm(d_p_i ~ density, xsection) %>% summary()
+# ggplot(xsection, aes(density, d_p_i)) + geom_point() + 
+#   geom_line() 
 ```
 
 # Nitrogen reduction costs
 
 ```{r}
-
-nitrogen_reduction_costs <- read_csv("../../data/format/nitrogen_reduction_costs.csv")
-# nitrogen_reduction_costs$ 
-
-knitr::kable(nitrogen_reduction_costs %>% dplyr::select(System = system, Cost = min_system_cost))
+# 
+# nitrogen_reduction_costs <- read_csv("../../data/format/nitrogen_reduction_costs.csv")
+# # nitrogen_reduction_costs$ 
+# 
+# knitr::kable(nitrogen_reduction_costs %>% dplyr::select(System = system, Cost = min_system_cost))
 ```
 
 
 # Social dilemmas?
 
 ```{r}
-house_contamination_devaluation_pct <- 0.04
-cost_of_upgraded_septic <- 1e4
-costs_and_probs <- tibble(density = set_units(seq(min(xsection$density), max(xsection$density), by = 0.01), "1/acre")) %>%
-  mutate(d_p_i = approx(xsection$density, xsection$d_p_i, xout = density)$y) %>%
-  crossing(house_price = seq(0, 1e6,length.out = 500)) %>%
-  mutate(C_x = house_price * house_contamination_devaluation_pct,
-         C_sigma = cost_of_upgraded_septic,
-         collective_motivation = d_p_i * C_x - C_sigma)
-costs_and_probs_threshold <- costs_and_probs %>% 
-  rename(x = density, y = house_price, z = collective_motivation) %>% 
-  anem::get_contourlines( levels = 0)
-
-
-ggplot(costs_and_probs) + geom_raster(aes(density, house_price, fill = collective_motivation)) +
-  geom_path(data=costs_and_probs_threshold,aes(x,y,group = line)) +
-  scale_fill_gradient2("Benefit of\ncollective action\nto upgrade septic") +
-  scale_y_continuous("Home price, $",label=scales::label_number_si()) +
-  labs(x="Housing_density",
-       caption = paste0("Potential social dilemma with cost of contamination ",house_contamination_devaluation_pct*100,"% of home value,\n",
-                        "and the cost of upgraded septic is $",format(cost_of_upgraded_septic,big.mark = ",")))
+# house_contamination_devaluation_pct <- 0.04
+# cost_of_upgraded_septic <- 1e4
+# costs_and_probs <- tibble(density = set_units(seq(min(xsection$density), max(xsection$density), by = 0.01), "1/acre")) %>%
+#   mutate(d_p_i = approx(xsection$density, xsection$d_p_i, xout = density)$y) %>%
+#   crossing(house_price = seq(0, 1e6,length.out = 500)) %>%
+#   mutate(C_x = house_price * house_contamination_devaluation_pct,
+#          C_sigma = cost_of_upgraded_septic,
+#          collective_motivation = d_p_i * C_x - C_sigma)
+# costs_and_probs_threshold <- costs_and_probs %>% 
+#   rename(x = density, y = house_price, z = collective_motivation) %>% 
+#   anem::get_contourlines( levels = 0)
+# 
+# 
+# ggplot(costs_and_probs) + geom_raster(aes(density, house_price, fill = collective_motivation)) +
+#   geom_path(data=costs_and_probs_threshold,aes(x,y,group = line)) +
+#   scale_fill_gradient2("Benefit of\ncollective action\nto upgrade septic") +
+#   scale_y_continuous("Home price, $",label=scales::label_number_si()) +
+#   labs(x="Housing_density",
+#        caption = paste0("Potential social dilemma with cost of contamination ",house_contamination_devaluation_pct*100,"% of home value,\n",
+#                         "and the cost of upgraded septic is $",format(cost_of_upgraded_septic,big.mark = ",")))
 ```
 
 ```{r}
-house_contamination_devaluation_pct <- 0.06
-cost_of_upgraded_septic <- 5e3
-costs_and_probs <- tibble(density = set_units(seq(min(xsection$density), max(xsection$density), by = 0.01), "1/acre")) %>%
-  mutate(d_p_i = approx(xsection$density, xsection$d_p_i, xout = density)$y) %>%
-  crossing(house_price = seq(0, 1e6,length.out = 500)) %>%
-  mutate(C_x = house_price * house_contamination_devaluation_pct,
-         C_sigma = cost_of_upgraded_septic,
-         collective_motivation = d_p_i * C_x - C_sigma)
-costs_and_probs_threshold <- costs_and_probs %>% 
-  rename(x = density, y = house_price, z = collective_motivation) %>% 
-  anem::get_contourlines( levels = 0)
-
-
-ggplot(costs_and_probs) + geom_raster(aes(density, house_price, fill = collective_motivation)) +
-  geom_path(data=costs_and_probs_threshold,aes(x,y,group = line)) +
-  scale_fill_gradient2("Benefit of\ncollective action\nto upgrade septic") +
-  scale_y_continuous("Home price, $",label=scales::label_number_si()) +
-  labs(x="Housing_density",
-       caption = paste0("Potential social dilemma with cost of contamination ",house_contamination_devaluation_pct*100,"% of home value,\n",
-                        "and the cost of upgraded septic is $",format(cost_of_upgraded_septic,big.mark = ",")))
+# house_contamination_devaluation_pct <- 0.06
+# cost_of_upgraded_septic <- 5e3
+# costs_and_probs <- tibble(density = set_units(seq(min(xsection$density), max(xsection$density), by = 0.01), "1/acre")) %>%
+#   mutate(d_p_i = approx(xsection$density, xsection$d_p_i, xout = density)$y) %>%
+#   crossing(house_price = seq(0, 1e6,length.out = 500)) %>%
+#   mutate(C_x = house_price * house_contamination_devaluation_pct,
+#          C_sigma = cost_of_upgraded_septic,
+#          collective_motivation = d_p_i * C_x - C_sigma)
+# costs_and_probs_threshold <- costs_and_probs %>% 
+#   rename(x = density, y = house_price, z = collective_motivation) %>% 
+#   anem::get_contourlines( levels = 0)
+# 
+# 
+# ggplot(costs_and_probs) + geom_raster(aes(density, house_price, fill = collective_motivation)) +
+#   geom_path(data=costs_and_probs_threshold,aes(x,y,group = line)) +
+#   scale_fill_gradient2("Benefit of\ncollective action\nto upgrade septic") +
+#   scale_y_continuous("Home price, $",label=scales::label_number_si()) +
+#   labs(x="Housing_density",
+#        caption = paste0("Potential social dilemma with cost of contamination ",house_contamination_devaluation_pct*100,"% of home value,\n",
+#                         "and the cost of upgraded septic is $",format(cost_of_upgraded_septic,big.mark = ",")))
 ```

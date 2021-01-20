@@ -76,7 +76,7 @@ gg_payouts <- function(payouts) {
           axis.title.y = ggplot2::element_blank(),
           axis.text.y = ggplot2::element_blank(),
           axis.ticks.y = ggplot2::element_blank())
-  plot_title <- paste0("A",payouts$tA[1],", B",payouts$tB[1])
+  plot_title <- paste0("A: ",payouts$tA[1],"\nB: ",payouts$tB[1])
   p_payouts <- gg_payouts_prep +
     ggplot2::geom_text(data=payouts, ggplot2::aes(1-B,A,label=payouts)) +
     ggplot2::annotate("text", x = -0.75, 1.75, label = plot_title)
@@ -126,4 +126,48 @@ get_2x2_contamination_vector <- function(type, player) {
   }
 
   return(C_vect)
+}
+
+#' Get 2x2 weighted payouts
+#'
+#' @param ... Tibbles of payouts from get_payouts_2x2
+#' @param weights Vector used to weight payouts, in order of \code{...}
+#' @examples
+#' payouts_i <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3, T)
+#' payouts_ii <- get_payouts_2x2(3, 1, Cs = 2, Cd = 3, T)
+#'
+#' weights <- c(0.5, 0.5)
+#' weighted_payouts <- get_2x2_weighted_payouts(payouts_i, payouts_ii, weights = weights)
+#' gg_payouts(weighted_payouts)
+get_2x2_weighted_payouts <- function(..., weights) {
+  payouts <- list(...)
+
+  if (length(payouts) != length(weights)) {
+    stop("The number of payout tibbles (",payouts,") must be the same as the length of weights (",length(weights),").")
+  }
+  payouts_w_weights_list <- mapply(function(li, weight) dplyr::mutate(li, weight = weight),
+                              li = payouts, weight = weights, SIMPLIFY = FALSE)
+  payouts_w_weights <- do.call(rbind,payouts_w_weights_list)
+
+  weighted_types <- payouts_w_weights %>%
+    dplyr::select(c("tA","tB","weight")) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(tAx = paste0(tA," (",weight,")"),
+                     tBx = paste0(tB," (",weight,")")) %>%
+    dplyr::summarize(tA = paste(tAx, collapse = ", "),
+                     tB = paste(tBx, collapse = ", "))
+
+  weighted_payouts <- payouts_w_weights %>%
+    dplyr::mutate(tA = weighted_types$tA,
+                  tB = weighted_types$tB) %>%
+    dplyr::group_by(A, B, tA, tB) %>%
+    dplyr::summarize(Cs_A = weighted.mean(Cs_A, weight),
+                     Cs_B = weighted.mean(Cs_B, weight),
+                     Cd_A = weighted.mean(Cd_A, weight),
+                     Cd_B = weighted.mean(Cd_B, weight),
+                     UA = weighted.mean(UA, weight),
+                     UB = weighted.mean(UB, weight), .groups = "drop") %>%
+    dplyr::mutate(payouts = paste(UA,UB,sep=", "))
+
+  return(weighted_payouts)
 }

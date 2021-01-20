@@ -302,17 +302,19 @@ get_union_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_r
 #' @param theta_range Vector describing the min and max of the uniform distribution for the mean lateral direction of flow
 #' @param alpha_range Vector describing the min and max of distance to the groundwater divide
 #' @param include_self Logical. If FALSE, any well at (x = 0, y = 0) will be removed
+#' @param return_option Either 1 or 2. See Return, below
 #' @param show_progress Logical that determines if progress bar is shown
 #' @export
 #' @details
 #' Note that theta_range must not cross -pi or pi.
 #' @return
-#' Returns a list containing the well array after clipping and shifting and probabilities of contamination
+#' If return_option = 1: Probability of contamination
+#' If return_option = 2: Returns a list containing the well array after clipping and shifting and probabilities of contamination
 #' @examples
 #' library(units)
 #' wells_array <- get_septic_well_array(hh_grid_example, "septic")
 #' prob <- get_intersection_probability(wells_array)
-get_intersection_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_range = c(0, 100), self_treat = FALSE, show_progress = TRUE) {
+get_intersection_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_range = c(0, 100), self_treat = FALSE, return_option = 1, show_progress = TRUE) {
   if (max(theta_range) > pi | min(theta_range) < -pi) {
     stop("theta_range must not cross -pi or pi")
   }
@@ -322,8 +324,11 @@ get_intersection_probability <- function(wells_array, theta_range = c(-pi, pi), 
   }
   wells_array <- shift_hh_grid_pi(wells_array, theta_range = theta_range)
   probs <- get_union_probability(wells_array, theta_range = theta_range, alpha_range = alpha_range, show_progress = show_progress)
-  # return(list(wells_array=wells_array, probs=probs))
-  return(sum(probs$p))
+  if (return_option == 1) {
+    return(sum(probs$p))
+  } else if (return_option == 2) {
+    return(list(wells_array=wells_array, probs=probs))
+  }
 }
 
 

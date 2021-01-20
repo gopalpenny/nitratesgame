@@ -1,0 +1,38 @@
+---
+title: "contamination-games-2x2"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{contamination-games-2x2}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(nitratesgame)
+```
+
+```{r}
+games <- crossing(tA = 1:4, tB = 1:4, nesting(tibble(Cs=c(2,3),Cd=c(3,2)))) %>%
+  filter(tA <= tB) %>%
+  rowwise() %>%
+  mutate(payouts = list(get_payouts_2x2(tA=tA, tB=tB, Cs=Cs, Cd=Cd))) %>%
+  ungroup() %>%
+  mutate(plots = map(payouts, gg_payouts))
+
+p_symmetric <- games %>% filter(tA == tB) %>% pull(plots) %>%
+  patchwork::wrap_plots(ncol = 2)
+p_asymmetric <- games %>% filter(tA != tB) %>% pull(plots) %>%
+  patchwork::wrap_plots(ncol = 2)
+
+ggsave("nitrates_2player_games_sym.eps", p_symmetric, path = out_path, width = 6, height = 6)
+ggsave("nitrates_2player_games_asym.eps", p_asymmetric, path = out_path, width = 6, height = 9)
+
+```
+

@@ -50,7 +50,7 @@ get_payouts_2x2 <- function(tA, tB, Cs, Cd, pos = FALSE) {
 #'
 #' Generate ggplot of 2x2 payouts
 #' @param payouts Tibble of payouts from get_payouts_2x2
-get_2x2_ggplot <- function(payouts) {
+get_2x2_ggplot <- function(payouts, equilibria = FALSE) {
   df_lines <- tibble::tribble(~x1, ~x2, ~y1, ~y2,
                       -1, 1.5, -0.5, -0.5,
                       -1, 1.5, 0.5, 0.5,
@@ -77,9 +77,24 @@ get_2x2_ggplot <- function(payouts) {
           axis.text.y = ggplot2::element_blank(),
           axis.ticks.y = ggplot2::element_blank())
   plot_title <- paste0("A: ",payouts$tA[1],"\nB: ",payouts$tB[1])
-  p_payouts <- gg_payouts_prep +
+  gg_payouts_prep <- gg_payouts_prep  +
     ggplot2::geom_text(data=payouts, ggplot2::aes(1-B,A,label=payouts)) +
     ggplot2::annotate("text", x = -0.75, 1.75, label = plot_title)
+  if(equilibria) {
+    payouts <- get_2x2_game_solutions(payouts)
+    p_payouts_prep <- gg_payouts_prep +
+      ggplot2::geom_rect(data= payouts[payouts$FB,],
+                         ggplot2::aes(xmin=0.5-B, xmax=1.5-B, ymin= A-0.5, ymax = A+0.5),fill='blue',alpha=0.3) +
+      ggplot2::geom_rect(data= payouts[payouts$NE %in% c(0,1),],
+                         ggplot2::aes(xmin=0.5-B, xmax=1.5-B, ymin= A-0.5, ymax = A+0.5),fill=NA, color = "red", size = 1.5)
+  } else {
+    p_payouts_prep <- gg_payouts_prep
+  }
+
+  p_payouts <- p_payouts_prep #+
+  #   ggplot2::geom_text(data=payouts, ggplot2::aes(1-B,A,label=payouts)) +
+  #   ggplot2::annotate("text", x = -0.75, 1.75, label = plot_title)
+  # p_payouts
   return(p_payouts)
 }
 
@@ -128,19 +143,82 @@ get_2x2_contamination_vector <- function(type, player) {
   return(C_vect)
 }
 
+#' Get 2x2 game solutions
+#'
+#' Get 2x2 Nash equilibrium and first best
+#' @param payouts List of payouts from get_payouts_2x2
+#' @description
+#' This function evaluates Nash stability by checking if
+#' @examples
+#' payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3)
+#' get_2x2_game_solutions(payouts)
+#' get_2x2_ggplot(payouts, equilibria = TRUE)
+#' payouts_ii <- get_payouts_2x2(3, 1, Cs = 2, Cd = 3, T)
+#'
+#' weights <- c(0.5, 0.5)
+#' weighted_payouts <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = weights)
+#' get_2x2_ggplot(weighted_payouts)
+get_2x2_game_solutions <- function(payouts) {
+  # get_2x2_cell_NE <- function()
+
+  payouts$NE <- sapply(1:4, get_2x2_nash_stability,payouts = payouts)
+  payouts$FB <- payouts$UA + payouts$UB == max(payouts$UA + payouts$UB)
+
+  return(payouts)
+}
+
+#' Get 2x2 Nash stability
+#'
+#' Get 2x2 Nash equilibrium and first best
+#' @param payouts List of payouts from get_payouts_2x2
+#' @param i Index at which to evaluate Nash stability
+#' @description
+#' This function evaluates Nash stability by checking if either player
+#' would benefit by switching their action.
+#' @return
+#' Returns a value of 1 (Nash equilibrium), 0 (stable), or -1 (not NE)
+#' @examples
+#' payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3, T)
+#' payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3)
+#' get_2x2_nash_stability(payouts, 4)
+#' get_2x2_nash_stability(payouts, 1)
+get_2x2_nash_stability <- function(payouts, i) {
+  # get_2x2_cell_NE <- function()
+  # i <- 1
+
+  A <- payouts$A[i]
+  B <- payouts$B[i]
+  UA <- payouts$UA[i]
+  UB <- payouts$UB[i]
+  A_switch <- 1 - A
+  B_switch <- 1 - B
+
+  # perspective of A: compare UA with UA after switching A
+  UA_switch <- payouts$UA[payouts$A == A_switch & payouts$B == B]
+  A_stable <- sign(UA - UA_switch)
+
+  # perspective of B: compare UB with UB after switching B
+  UB_switch <- payouts$UB[payouts$A == A & payouts$B == B_switch]
+  B_stable <- sign(UB - UB_switch)
+
+  stability <- pmin(A_stable, B_stable)
+
+  return(stability)
+}
+
 #' Get 2x2 weighted payouts
 #'
-#' @param ... Tibbles of payouts from get_payouts_2x2
+#' @param payouts_list List of payouts from get_payouts_2x2
 #' @param weights Vector used to weight payouts, in order of \code{...}
 #' @examples
 #' payouts_i <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3, T)
 #' payouts_ii <- get_payouts_2x2(3, 1, Cs = 2, Cd = 3, T)
 #'
 #' weights <- c(0.5, 0.5)
-#' weighted_payouts <- get_2x2_weighted_payouts(payouts_i, payouts_ii, weights = weights)
+#' weighted_payouts <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = weights)
 #' get_2x2_ggplot(weighted_payouts)
-get_2x2_weighted_payouts <- function(..., weights) {
-  payouts_list <- list(...)
+get_2x2_weighted_payouts <- function(payouts_list, weights) {
+  # payouts_list <- list(...)
 
   if (length(payouts) != length(weights)) {
     stop("The number of payout tibbles (",payouts,") must be the same as the length of weights (",length(weights),").")

@@ -36,11 +36,12 @@ Contamination structure C_A, C_B: vector indicating cost to each player
 }
 \examples{
 payouts <- get_payouts_2x2(3, 3, Cs = 1, Cd = 2, T)
-gg_payouts(payouts)
+get_2x2_ggplot(payouts)
 
 payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 1, T)
-gg_payouts(payouts)
+get_2x2_ggplot(payouts)
 
 payouts <- get_payouts_2x2(4, 4, Cs = 1, Cd = 2, T)
-gg_payouts(payouts)
+get_2x2_ggplot(payouts)
 }
+\keyword{internal}

@@ -50,7 +50,7 @@ get_payouts_2x2 <- function(tA, tB, Cs, Cd, pos = FALSE) {
 #'
 #' Generate ggplot of 2x2 payouts
 #' @param payouts Tibble of payouts from get_payouts_2x2
-gg_payouts <- function(payouts) {
+get_2x2_ggplot <- function(payouts) {
   df_lines <- tibble::tribble(~x1, ~x2, ~y1, ~y2,
                       -1, 1.5, -0.5, -0.5,
                       -1, 1.5, 0.5, 0.5,
@@ -109,13 +109,13 @@ gg_payouts <- function(payouts) {
 #' @keywords internal
 #' @examples
 #' payouts <- get_payouts_2x2(3, 3, Cs = 1, Cd = 2, T)
-#' gg_payouts(payouts)
+#' get_2x2_ggplot(payouts)
 #'
 #' payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 1, T)
-#' gg_payouts(payouts)
+#' get_2x2_ggplot(payouts)
 #'
 #' payouts <- get_payouts_2x2(4, 4, Cs = 1, Cd = 2, T)
-#' gg_payouts(payouts)
+#' get_2x2_ggplot(payouts)
 get_2x2_contamination_vector <- function(type, player) {
   if (player == "A") {
     C_vect <- switch(type, c(0,0), c(1,0), c(0,1), c(1,1))
@@ -138,9 +138,9 @@ get_2x2_contamination_vector <- function(type, player) {
 #'
 #' weights <- c(0.5, 0.5)
 #' weighted_payouts <- get_2x2_weighted_payouts(payouts_i, payouts_ii, weights = weights)
-#' gg_payouts(weighted_payouts)
+#' get_2x2_ggplot(weighted_payouts)
 get_2x2_weighted_payouts <- function(..., weights) {
-  payouts <- list(...)
+  payouts_list <- list(...)
 
   if (length(payouts) != length(weights)) {
     stop("The number of payout tibbles (",payouts,") must be the same as the length of weights (",length(weights),").")

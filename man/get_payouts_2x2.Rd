@@ -4,7 +4,16 @@
 \alias{get_payouts_2x2}
 \title{Get payouts for 2x2 games}
 \usage{
-get_payouts_2x2(tB, tA, Cs, Cd, pos = FALSE)
+get_payouts_2x2(tA, tB, Cs, Cd, pos = FALSE)
+}
+\arguments{
+\item{tA}{Player A type as 1, 2, 3, or 4}
+
+\item{tB}{Player B type as 1, 2, 3, or 4}
+
+\item{Cs}{Cost of upgrading septic system (positive)}
+
+\item{Cd}{Cost of contamination of domestic well (positive)}
 }
 \value{
 The function returns a tibble containing the following columns:
@@ -18,5 +27,7 @@ The function returns a tibble containing the following columns:
 }
 }
 \description{
-Get payouts for 2x2 games
+This function generates a 2x2 payout matrix for players A and B
+given their player type, decision space (upgrade septic or not),
+and associated costs.
 }

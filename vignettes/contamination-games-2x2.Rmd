@@ -24,15 +24,26 @@ games <- crossing(tA = 1:4, tB = 1:4, nesting(tibble(Cs=c(2,3),Cd=c(3,2)))) %>%
   rowwise() %>%
   mutate(payouts = list(get_payouts_2x2(tA=tA, tB=tB, Cs=Cs, Cd=Cd))) %>%
   ungroup() %>%
-  mutate(plots = map(payouts, gg_payouts))
+  mutate(plots = map(payouts, function(x) get_2x2_ggplot(x, TRUE)))
 
 p_symmetric <- games %>% filter(tA == tB) %>% pull(plots) %>%
   patchwork::wrap_plots(ncol = 2)
+p_symmetric
+
+payouts <- get_payouts_2x2(1, 1, 2, 3)
+get_2x2_ggplot(payouts, TRUE)
+
 p_asymmetric <- games %>% filter(tA != tB) %>% pull(plots) %>%
   patchwork::wrap_plots(ncol = 2)
+p_asymmetric
 
-ggsave("nitrates_2player_games_sym.eps", p_symmetric, path = out_path, width = 6, height = 6)
-ggsave("nitrates_2player_games_asym.eps", p_asymmetric, path = out_path, width = 6, height = 9)
+# ggsave("nitrates_2player_games_sym.eps", p_symmetric, path = out_path, width = 6, height = 6)
+# ggsave("nitrates_2player_games_asym.eps", p_asymmetric, path = out_path, width = 6, height = 9)
+```
+
+```{r}
+
+
 
 ```
 

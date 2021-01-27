@@ -4,7 +4,7 @@
 \alias{get_2x2_ggplot}
 \title{ggplot Payouts}
 \usage{
-get_2x2_ggplot(payouts)
+get_2x2_ggplot(payouts, equilibria = FALSE)
 }
 \arguments{
 \item{payouts}{Tibble of payouts from get_payouts_2x2}

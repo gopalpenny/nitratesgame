@@ -4,10 +4,10 @@
 \alias{get_2x2_weighted_payouts}
 \title{Get 2x2 weighted payouts}
 \usage{
-get_2x2_weighted_payouts(..., weights)
+get_2x2_weighted_payouts(payouts_list, weights)
 }
 \arguments{
-\item{...}{Tibbles of payouts from get_payouts_2x2}
+\item{payouts_list}{List of payouts from get_payouts_2x2}
 
 \item{weights}{Vector used to weight payouts, in order of \code{...}}
 }
@@ -19,6 +19,10 @@ payouts_i <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3, T)
 payouts_ii <- get_payouts_2x2(3, 1, Cs = 2, Cd = 3, T)
 
 weights <- c(0.5, 0.5)
-weighted_payouts <- get_2x2_weighted_payouts(payouts_i, payouts_ii, weights = weights)
-get_2x2_ggplot(weighted_payouts)
+weighted_payouts <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = weights)
+
+library(gridExtra)
+grid.arrange(get_2x2_ggplot(payouts_i, equilibria = TRUE),
+  get_2x2_ggplot(payouts_ii, equilibria = TRUE),
+  get_2x2_ggplot(weighted_payouts, equilibria = TRUE))
 }

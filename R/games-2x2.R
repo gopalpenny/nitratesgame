@@ -50,6 +50,7 @@ get_payouts_2x2 <- function(tA, tB, Cs, Cd, pos = FALSE) {
 #'
 #' Generate ggplot of 2x2 payouts
 #' @param payouts Tibble of payouts from get_payouts_2x2
+#' @export
 get_2x2_ggplot <- function(payouts, equilibria = FALSE) {
   df_lines <- tibble::tribble(~x1, ~x2, ~y1, ~y2,
                       -1, 1.5, -0.5, -0.5,
@@ -149,6 +150,7 @@ get_2x2_contamination_vector <- function(type, player) {
 #' @param payouts List of payouts from get_payouts_2x2
 #' @description
 #' This function evaluates Nash stability by checking if
+#' @export
 #' @examples
 #' payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3)
 #' get_2x2_game_solutions(payouts)
@@ -210,6 +212,7 @@ get_2x2_nash_stability <- function(payouts, i) {
 #'
 #' @param payouts_list List of payouts from get_payouts_2x2
 #' @param weights Vector used to weight payouts, in order of \code{...}
+#' @export
 #' @examples
 #' payouts_i <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3, T)
 #' payouts_ii <- get_payouts_2x2(3, 1, Cs = 2, Cd = 3, T)
@@ -220,11 +223,11 @@ get_2x2_nash_stability <- function(payouts, i) {
 get_2x2_weighted_payouts <- function(payouts_list, weights) {
   # payouts_list <- list(...)
 
-  if (length(payouts) != length(weights)) {
-    stop("The number of payout tibbles (",payouts,") must be the same as the length of weights (",length(weights),").")
+  if (length(payouts_list) != length(weights)) {
+    stop("The number of payout tibbles (",length(payouts_list),") must be the same as the length of weights (",length(weights),").")
   }
   payouts_w_weights_list <- mapply(function(li, weight) dplyr::mutate(li, weight = weight),
-                              li = payouts, weight = weights, SIMPLIFY = FALSE)
+                              li = payouts_list, weight = weights, SIMPLIFY = FALSE)
   payouts_w_weights <- do.call(rbind,payouts_w_weights_list)
 
   weighted_types <- payouts_w_weights %>%

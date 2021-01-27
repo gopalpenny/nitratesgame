@@ -21,7 +21,13 @@
 #' \item UA, UB: Expected utility of both costs
 #' \item payouts: Payout structure for each cell for A, B
 #' }
-get_payouts_2x2 <- function(tA, tB, Cs, Cd, pos = FALSE) {
+#' @examples
+#' payouts_pos <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)
+#' payouts_neg <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, F)
+#'
+#' get_2x2_ggplot()
+#'
+get_2x2_payouts <- function(tA, tB, Cs, Cd, pos = FALSE) {
   if(pos) { # adj adjusts the utility by Cs + Cd to obtain positive utilities
     adj <- Cs + Cd
   } else{
@@ -49,8 +55,17 @@ get_payouts_2x2 <- function(tA, tB, Cs, Cd, pos = FALSE) {
 #' ggplot Payouts
 #'
 #' Generate ggplot of 2x2 payouts
-#' @param payouts Tibble of payouts from get_payouts_2x2
+#' @param payouts Tibble of payouts from get_2x2_payouts
 #' @export
+#' @examples
+#' payouts <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)
+#' get_2x2_ggplot(payouts)
+#'
+#' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 1, T)
+#' get_2x2_ggplot(payouts, TRUE)
+#'
+#' payouts <- get_2x2_payouts(4, 4, Cs = 1, Cd = 2, T)
+#' get_2x2_ggplot(payouts, TRUE)
 get_2x2_ggplot <- function(payouts, equilibria = FALSE) {
   df_lines <- tibble::tribble(~x1, ~x2, ~y1, ~y2,
                       -1, 1.5, -0.5, -0.5,
@@ -71,16 +86,17 @@ get_2x2_ggplot <- function(payouts, equilibria = FALSE) {
     ggplot2::geom_segment(data=df_lines,ggplot2::aes(x1, y1, xend = x2, yend = y2)) +
     ggplot2::theme(panel.background = ggplot2::element_rect(color=NA,fill=NA),
           panel.border = ggplot2::element_rect(color=NA,fill=NA),
-          axis.title.x = ggplot2::element_blank(),
+          # axis.title.x = ggplot2::element_blank(),
           axis.text.x = ggplot2::element_blank(),
           axis.ticks.x = ggplot2::element_blank(),
-          axis.title.y = ggplot2::element_blank(),
+          # axis.title.y = ggplot2::element_blank(),
           axis.text.y = ggplot2::element_blank(),
           axis.ticks.y = ggplot2::element_blank())
   plot_title <- paste0("A: ",payouts$tA[1],"\nB: ",payouts$tB[1])
   gg_payouts_prep <- gg_payouts_prep  +
     ggplot2::geom_text(data=payouts, ggplot2::aes(1-B,A,label=payouts)) +
-    ggplot2::annotate("text", x = -0.75, 1.75, label = plot_title)
+    # ggplot2::annotate("text", x = -0.75, 1.75, label = plot_title) +
+    ggplot2::labs(x = paste0("A: ",payouts$tA[1]), y = paste0("\nB: ",payouts$tB[1]))
   if(equilibria) {
     payouts <- get_2x2_game_solutions(payouts)
     p_payouts_prep <- gg_payouts_prep +
@@ -124,13 +140,13 @@ get_2x2_ggplot <- function(payouts, equilibria = FALSE) {
 #' }
 #' @keywords internal
 #' @examples
-#' payouts <- get_payouts_2x2(3, 3, Cs = 1, Cd = 2, T)
+#' payouts <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)
 #' get_2x2_ggplot(payouts)
 #'
-#' payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 1, T)
+#' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 1, T)
 #' get_2x2_ggplot(payouts)
 #'
-#' payouts <- get_payouts_2x2(4, 4, Cs = 1, Cd = 2, T)
+#' payouts <- get_2x2_payouts(4, 4, Cs = 1, Cd = 2, T)
 #' get_2x2_ggplot(payouts)
 get_2x2_contamination_vector <- function(type, player) {
   if (player == "A") {
@@ -147,15 +163,15 @@ get_2x2_contamination_vector <- function(type, player) {
 #' Get 2x2 game solutions
 #'
 #' Get 2x2 Nash equilibrium and first best
-#' @param payouts List of payouts from get_payouts_2x2
+#' @param payouts List of payouts from get_2x2_payouts
 #' @description
 #' This function evaluates Nash stability by checking if
 #' @export
 #' @examples
-#' payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3)
+#' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3)
 #' get_2x2_game_solutions(payouts)
 #' get_2x2_ggplot(payouts, equilibria = TRUE)
-#' payouts_ii <- get_payouts_2x2(3, 1, Cs = 2, Cd = 3, T)
+#' payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, T)
 #'
 #' weights <- c(0.5, 0.5)
 #' weighted_payouts <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = weights)
@@ -172,7 +188,7 @@ get_2x2_game_solutions <- function(payouts) {
 #' Get 2x2 Nash stability
 #'
 #' Get 2x2 Nash equilibrium and first best
-#' @param payouts List of payouts from get_payouts_2x2
+#' @param payouts List of payouts from get_2x2_payouts
 #' @param i Index at which to evaluate Nash stability
 #' @description
 #' This function evaluates Nash stability by checking if either player
@@ -180,8 +196,8 @@ get_2x2_game_solutions <- function(payouts) {
 #' @return
 #' Returns a value of 1 (Nash equilibrium), 0 (stable), or -1 (not NE)
 #' @examples
-#' payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3, T)
-#' payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3)
+#' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3, T)
+#' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3)
 #' get_2x2_nash_stability(payouts, 4)
 #' get_2x2_nash_stability(payouts, 1)
 get_2x2_nash_stability <- function(payouts, i) {
@@ -210,16 +226,20 @@ get_2x2_nash_stability <- function(payouts, i) {
 
 #' Get 2x2 weighted payouts
 #'
-#' @param payouts_list List of payouts from get_payouts_2x2
+#' @param payouts_list List of payouts from get_2x2_payouts
 #' @param weights Vector used to weight payouts, in order of \code{...}
 #' @export
 #' @examples
-#' payouts_i <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3, T)
-#' payouts_ii <- get_payouts_2x2(3, 1, Cs = 2, Cd = 3, T)
+#' payouts_i <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3, T)
+#' payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, T)
 #'
 #' weights <- c(0.5, 0.5)
 #' weighted_payouts <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = weights)
-#' get_2x2_ggplot(weighted_payouts)
+#'
+#' library(gridExtra)
+#' grid.arrange(get_2x2_ggplot(payouts_i, equilibria = TRUE),
+#'   get_2x2_ggplot(payouts_ii, equilibria = TRUE),
+#'   get_2x2_ggplot(weighted_payouts, equilibria = TRUE))
 get_2x2_weighted_payouts <- function(payouts_list, weights) {
   # payouts_list <- list(...)
 

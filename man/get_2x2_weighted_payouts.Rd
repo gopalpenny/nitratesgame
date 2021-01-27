@@ -7,7 +7,7 @@
 get_2x2_weighted_payouts(payouts_list, weights)
 }
 \arguments{
-\item{payouts_list}{List of payouts from get_payouts_2x2}
+\item{payouts_list}{List of payouts from get_2x2_payouts}
 
 \item{weights}{Vector used to weight payouts, in order of \code{...}}
 }
@@ -15,8 +15,8 @@ get_2x2_weighted_payouts(payouts_list, weights)
 Get 2x2 weighted payouts
 }
 \examples{
-payouts_i <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3, T)
-payouts_ii <- get_payouts_2x2(3, 1, Cs = 2, Cd = 3, T)
+payouts_i <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3, T)
+payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, T)
 
 weights <- c(0.5, 0.5)
 weighted_payouts <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = weights)

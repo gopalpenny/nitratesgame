@@ -1,8 +1,8 @@
 # test-games-2x2
 
 # get_2x2_ggplot
-payouts_i <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3, T)
-payouts_ii <- get_payouts_2x2(3, 1, Cs = 2, Cd = 3, T)
+payouts_i <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3, T)
+payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, T)
 
 weights <- c(0.25, 0.75)
 weighted_payouts_00_100 <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = c(0,1))

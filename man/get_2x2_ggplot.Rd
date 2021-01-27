@@ -7,8 +7,18 @@
 get_2x2_ggplot(payouts, equilibria = FALSE)
 }
 \arguments{
-\item{payouts}{Tibble of payouts from get_payouts_2x2}
+\item{payouts}{Tibble of payouts from get_2x2_payouts}
 }
 \description{
 Generate ggplot of 2x2 payouts
+}
+\examples{
+payouts <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)
+get_2x2_ggplot(payouts)
+
+payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 1, T)
+get_2x2_ggplot(payouts, TRUE)
+
+payouts <- get_2x2_payouts(4, 4, Cs = 1, Cd = 2, T)
+get_2x2_ggplot(payouts, TRUE)
 }

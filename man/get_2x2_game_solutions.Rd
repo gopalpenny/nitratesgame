@@ -7,7 +7,7 @@
 get_2x2_game_solutions(payouts)
 }
 \arguments{
-\item{payouts}{List of payouts from get_payouts_2x2}
+\item{payouts}{List of payouts from get_2x2_payouts}
 }
 \description{
 This function evaluates Nash stability by checking if
@@ -16,10 +16,10 @@ This function evaluates Nash stability by checking if
 Get 2x2 Nash equilibrium and first best
 }
 \examples{
-payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3)
+payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3)
 get_2x2_game_solutions(payouts)
 get_2x2_ggplot(payouts, equilibria = TRUE)
-payouts_ii <- get_payouts_2x2(3, 1, Cs = 2, Cd = 3, T)
+payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, T)
 
 weights <- c(0.5, 0.5)
 weighted_payouts <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = weights)

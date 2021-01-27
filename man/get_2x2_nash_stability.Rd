@@ -7,7 +7,7 @@
 get_2x2_nash_stability(payouts, i)
 }
 \arguments{
-\item{payouts}{List of payouts from get_payouts_2x2}
+\item{payouts}{List of payouts from get_2x2_payouts}
 
 \item{i}{Index at which to evaluate Nash stability}
 }
@@ -22,8 +22,8 @@ would benefit by switching their action.
 Get 2x2 Nash equilibrium and first best
 }
 \examples{
-payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3, T)
-payouts <- get_payouts_2x2(3, 3, Cs = 2, Cd = 3)
+payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3, T)
+payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3)
 get_2x2_nash_stability(payouts, 4)
 get_2x2_nash_stability(payouts, 1)
 }

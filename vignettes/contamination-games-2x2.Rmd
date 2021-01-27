@@ -16,23 +16,37 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(nitratesgame)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(tibble)
+library(patchwork)
 ```
 
+A simple example
+
 ```{r}
+payouts <- get_2x2_payouts(1, 1, 2, 3)
+get_2x2_ggplot(payouts, TRUE)
+```
+
+Matrices of games
+
+```{r fig.width = 7, fig.height = 8}
 games <- crossing(tA = 1:4, tB = 1:4, nesting(tibble(Cs=c(2,3),Cd=c(3,2)))) %>%
   filter(tA <= tB) %>%
   rowwise() %>%
-  mutate(payouts = list(get_payouts_2x2(tA=tA, tB=tB, Cs=Cs, Cd=Cd))) %>%
+  mutate(payouts = list(get_2x2_payouts(tA=tA, tB=tB, Cs=Cs, Cd=Cd))) %>%
   ungroup() %>%
   mutate(plots = map(payouts, function(x) get_2x2_ggplot(x, TRUE)))
 
 p_symmetric <- games %>% filter(tA == tB) %>% pull(plots) %>%
   patchwork::wrap_plots(ncol = 2)
 p_symmetric
+```
 
-payouts <- get_payouts_2x2(1, 1, 2, 3)
-get_2x2_ggplot(payouts, TRUE)
 
+```{r fig.width = 7, fig.height = 12}
 p_asymmetric <- games %>% filter(tA != tB) %>% pull(plots) %>%
   patchwork::wrap_plots(ncol = 2)
 p_asymmetric
@@ -42,6 +56,12 @@ p_asymmetric
 ```
 
 ```{r}
+# games <- crossing(tA = 1:4, tB = 1:4, nesting(tibble(Cs=Cs,Cd=Cd))) %>%
+#   # filter(tA <= tB) %>%
+#   rowwise() %>%
+#   mutate(payouts = list(get_2x2_payouts(tA=tA, tB=tB, Cs=Cs, Cd=Cd))) %>%
+#   ungroup() %>%
+#   mutate(plots = map(payouts, function(x) get_2x2_ggplot(x, TRUE)))
 
 
 

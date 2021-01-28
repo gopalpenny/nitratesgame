@@ -35,6 +35,5 @@ and associated costs.
 payouts_pos <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)
 payouts_neg <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, F)
 
-get_2x2_ggplot()
-
+get_2x2_ggplot(payouts_pos, T)
 }

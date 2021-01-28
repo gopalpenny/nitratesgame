@@ -4,16 +4,34 @@
 \alias{get_2x2_game_solutions}
 \title{Get 2x2 game solutions}
 \usage{
-get_2x2_game_solutions(payouts)
+get_2x2_game_solutions(payouts, output = "solution")
 }
 \arguments{
 \item{payouts}{List of payouts from get_2x2_payouts}
+
+\item{output}{Either "solution", "NE", "FB", or "type". See Value section.}
+}
+\value{
+The \code{output} variable determines the type of output. The options are:
+\itemize{
+\item \code{"solution"}: a payout tibble is returned that contains additional columns NE and FB
+columns containing the solution.
+\item \code{"NE"}: the pure strategies where NE == 1 or 0.
+\item \code{"FB"}: the pure strategies where FB == 1.
+\item \code{"type"}: the type of game (e.g., "social dilemma" or "collective synergy").
+}
 }
 \description{
-This function evaluates Nash stability by checking if
+Get 2x2 Nash equilibrium and first best
 }
 \details{
-Get 2x2 Nash equilibrium and first best
+This function evaluates Nash stability by checking, for each combination of
+pure strategies, if any player is incentivized to change their strategy. The set of
+pure strategies can be stable (NE set to 1), neutral (NE set to 0), or unstable
+(NE set to -1). The first two (0 and 1) represent Nash equilibria. The first best
+solution is calculated as the set of pure strategies that product the highest net
+payout among all players (i.e., the sum for all players). A value of 1 indicates
+the set of pure strategies is a joint optimum, and 0 indicates it is not.
 }
 \examples{
 payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3)

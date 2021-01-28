@@ -25,8 +25,7 @@
 #' payouts_pos <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)
 #' payouts_neg <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, F)
 #'
-#' get_2x2_ggplot()
-#'
+#' get_2x2_ggplot(payouts_pos, T)
 get_2x2_payouts <- function(tA, tB, Cs, Cd, pos = FALSE) {
   if(pos) { # adj adjusts the utility by Cs + Cd to obtain positive utilities
     adj <- Cs + Cd
@@ -86,21 +85,26 @@ get_2x2_ggplot <- function(payouts, equilibria = FALSE) {
     ggplot2::geom_segment(data=df_lines,ggplot2::aes(x1, y1, xend = x2, yend = y2)) +
     ggplot2::theme(panel.background = ggplot2::element_rect(color=NA,fill=NA),
           panel.border = ggplot2::element_rect(color=NA,fill=NA),
-          # axis.title.x = ggplot2::element_blank(),
-          axis.text.x = ggplot2::element_blank(),
+          axis.title.x = ggplot2::element_blank(),
+          # axis.text.x = ggplot2::element_blank(),
+          axis.text.x = ggplot2::element_text(size = 11, color = "black"),
           axis.ticks.x = ggplot2::element_blank(),
-          # axis.title.y = ggplot2::element_blank(),
-          axis.text.y = ggplot2::element_blank(),
+          axis.title.y = ggplot2::element_blank(),
+          # axis.text.y = ggplot2::element_blank(),
+          axis.text.y = ggplot2::element_text(size = 11, color = "black", angle = 90, hjust = 0.5),
           axis.ticks.y = ggplot2::element_blank())
   plot_title <- paste0("A: ",payouts$tA[1],"\nB: ",payouts$tB[1])
+  y_title <- paste0("A: ",payouts$tA[1])
+  x_title <- paste0("\nB: ",payouts$tB[1])
   gg_payouts_prep <- gg_payouts_prep  +
     ggplot2::geom_text(data=payouts, ggplot2::aes(1-B,A,label=payouts)) +
     # ggplot2::annotate("text", x = -0.75, 1.75, label = plot_title) +
-    ggplot2::labs(x = paste0("A: ",payouts$tA[1]), y = paste0("\nB: ",payouts$tB[1]))
+    ggplot2::scale_x_continuous(breaks = 0.5, labels = x_title, position = "top")+
+    ggplot2::scale_y_continuous(breaks = 0.5, labels = y_title)
   if(equilibria) {
     payouts <- get_2x2_game_solutions(payouts)
     p_payouts_prep <- gg_payouts_prep +
-      ggplot2::geom_rect(data= payouts[payouts$FB,],
+      ggplot2::geom_rect(data= payouts[payouts$FB == 1,],
                          ggplot2::aes(xmin=0.5-B, xmax=1.5-B, ymin= A-0.5, ymax = A+0.5),fill='blue',alpha=0.3) +
       ggplot2::geom_rect(data= payouts[payouts$NE %in% c(0,1),],
                          ggplot2::aes(xmin=0.5-B, xmax=1.5-B, ymin= A-0.5, ymax = A+0.5),fill=NA, color = "red", size = 1.5)
@@ -164,25 +168,92 @@ get_2x2_contamination_vector <- function(type, player) {
 #'
 #' Get 2x2 Nash equilibrium and first best
 #' @param payouts List of payouts from get_2x2_payouts
-#' @description
-#' This function evaluates Nash stability by checking if
+#' @param output Either "solution", "NE", "FB", or "dilemma", or "type". See Value section.
+#' @details
+#' This function evaluates Nash stability by checking, for each combination of
+#' pure strategies, if any player is incentivized to change their strategy. The set of
+#' pure strategies can be stable (NE set to 1), neutral (NE set to 0), or unstable
+#' (NE set to -1). The first two (0 and 1) represent Nash equilibria. The first best
+#' solution is calculated as the set of pure strategies that product the highest net
+#' payout among all players (i.e., the sum for all players). A value of 1 indicates
+#' the set of pure strategies is a joint optimum, and 0 indicates it is not.
+#' @return
+#' The \code{output} variable determines the type of output. The options are:
+#' \itemize{
+#' \item \code{"solution"}: a payout tibble is returned that contains additional columns NE and FB
+#' columns containing the solution.
+#' \item \code{"NE"}: the pure strategies where NE == 1 or 0.
+#' \item \code{"FB"}: the pure strategies where FB == 1.
+#' \item \code{"dilemma"}: whether the game is a "social dilemma" or "agreement".
+#' \item \code{"type"}: the payout structure for each player.
+#' }
 #' @export
 #' @examples
 #' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3)
 #' get_2x2_game_solutions(payouts)
+#'
+#' # Note that this function is contained in get_2x2_ggplot, if desired
 #' get_2x2_ggplot(payouts, equilibria = TRUE)
 #' payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, T)
 #'
 #' weights <- c(0.5, 0.5)
 #' weighted_payouts <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = weights)
-#' get_2x2_ggplot(weighted_payouts)
-get_2x2_game_solutions <- function(payouts) {
+#' get_2x2_game_solutions(weighted_payouts, "NE")
+#' get_2x2_game_solutions(weighted_payouts, "FB")
+#' get_2x2_game_solutions(weighted_payouts, "type")
+get_2x2_game_solutions <- function(payouts, output = "solution") {
   # get_2x2_cell_NE <- function()
 
   payouts$NE <- sapply(1:4, get_2x2_nash_stability,payouts = payouts)
-  payouts$FB <- payouts$UA + payouts$UB == max(payouts$UA + payouts$UB)
+  payouts$FB <- ifelse(payouts$UA + payouts$UB == max(payouts$UA + payouts$UB), 1, 0)
 
-  return(payouts)
+  nash_strategies <- payouts %>% dplyr::rowwise() %>% dplyr::filter(NE >= 0) %>%
+    dplyr::mutate(pure_strategy = paste0("A",A,"B",B)) %>%
+    dplyr::pull(pure_strategy) %>% paste(collapse = ", ")
+  fb_strategies <- payouts %>% rowwise() %>% filter(FB == 1) %>%
+    dplyr::mutate(pure_strategy = paste0("A",A,"B",B)) %>%
+    dplyr::pull(pure_strategy) %>% paste(collapse = ", ")
+
+  if (output == "solution") {
+    out_var <- payouts
+  } else if (output == "NE") {
+    out_var <- nash_strategies
+  } else if (output == "FB") {
+    out_var <- fb_strategies
+  } else if (output == "dilemma") {
+    out_var <- dplyr::case_when(
+      grepl(fb_strategies, nash_strategies) ~ "agreement",
+      !grepl(fb_strategies, nash_strategies) ~ "social dilemma",
+      TRUE ~ "something unexpected - investigate further"
+    )
+  } else if (output == "type") {
+    A_ranks <- payouts %>% dplyr::arrange(A, B) %>% dplyr::pull(UA) %>% rank(ties.method = "max") %>%
+      tibble::tibble(rank = ., cell = c("r00", "ropp", "rself", "r11")) %>%
+      tidyr::pivot_wider(names_from = "cell", values_from = "rank")
+    B_ranks <- payouts %>% dplyr::arrange(B, A) %>% dplyr::pull(UB) %>% rank(ties.method = "max") %>%
+      tibble::tibble(rank = ., cell = c("r00", "ropp", "rself", "r11")) %>%
+      tidyr::pivot_wider(names_from = "cell", values_from = "rank")
+    A_gametype <- A_ranks %>%
+      dplyr::inner_join(game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
+    B_gametype <- B_ranks %>%
+      dplyr::inner_join(game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
+    if (nrow(A_gametype) == 1 & nrow(B_gametype) == 1) {
+      out_var <- paste0(A_gametype$abbrev,"-",B_gametype$abbrev)
+    } else {
+      out_var <- "ties"
+      # warning("game not found -- likely not ordinal payouts for at least one player.")
+      # out_var <- dplyr::case_when(
+      #   grepl(fb_strategies, nash_strategies) ~ "agreement",
+      #   !grepl(fb_strategies, nash_strategies) ~ "social dilemma",
+      #   TRUE ~ "something unexpected - investigate further"
+      )
+    }
+
+  } else {
+    stop("output must be one of solution, NE, FB, or type. Instead it is: ",output,".\n")
+  }
+
+  return(out_var)
 }
 
 #' Get 2x2 Nash stability

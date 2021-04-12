@@ -6,6 +6,7 @@
 #' @param tB Player B type as 1, 2, 3, or 4
 #' @param Cs Cost of upgrading septic system (positive)
 #' @param Cd Cost of contamination of domestic well (positive)
+#' @param pos If \code{TRUE}, all payouts are shifted by Cs + Cd (prior to any rescaling)
 #' @export
 #' @description
 #' This function generates a 2x2 payout matrix for players A and B
@@ -45,8 +46,7 @@ get_2x2_payouts <- function(tA, tB, Cs, Cd, pos = FALSE) {
       Cd_A = -pmax(C_A[1]*(1-A), C_B[1]*(1-B))*Cd,
       Cd_B = -pmax(C_A[2]*(1-A), C_B[2]*(1-B))*Cd,
       UA = Cs_A + Cd_A + adj,
-      UB = Cs_B + Cd_B + adj,
-      payouts = paste(UA,UB,sep=", "))
+      UB = Cs_B + Cd_B + adj)
   return(df)
 }
 
@@ -55,6 +55,8 @@ get_2x2_payouts <- function(tA, tB, Cs, Cd, pos = FALSE) {
 #'
 #' Generate ggplot of 2x2 payouts
 #' @param payouts Tibble of payouts from get_2x2_payouts
+#' @param equilibria If \code{TRUE}, highlight equilibria
+#' @param nsmall Used for rounding payouts
 #' @export
 #' @examples
 #' payouts <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)
@@ -65,7 +67,9 @@ get_2x2_payouts <- function(tA, tB, Cs, Cd, pos = FALSE) {
 #'
 #' payouts <- get_2x2_payouts(4, 4, Cs = 1, Cd = 2, T)
 #' get_2x2_ggplot(payouts, TRUE)
-get_2x2_ggplot <- function(payouts, equilibria = FALSE) {
+get_2x2_ggplot <- function(payouts, equilibria = FALSE, nsmall = 2) {
+  payouts <- payouts %>%
+    dplyr::mutate(payouts = paste(round(UA,nsmall),round(UB,nsmall),sep=", "))
   df_lines <- tibble::tribble(~x1, ~x2, ~y1, ~y2,
                       -1, 1.5, -0.5, -0.5,
                       -1, 1.5, 0.5, 0.5,
@@ -227,28 +231,52 @@ get_2x2_game_solutions <- function(payouts, output = "solution") {
       TRUE ~ "something unexpected - investigate further"
     )
   } else if (output == "type") {
-    A_ranks <- payouts %>% dplyr::arrange(A, B) %>% dplyr::pull(UA) %>% rank(ties.method = "max") %>%
+    # Get A game type
+
+    # get ranks
+    A_ranks <- payouts %>% dplyr::arrange(A, B) %>% dplyr::pull(UA) %>% rank(ties.method = "min") %>%
       tibble::tibble(rank = ., cell = c("r00", "ropp", "rself", "r11")) %>%
       tidyr::pivot_wider(names_from = "cell", values_from = "rank")
-    B_ranks <- payouts %>% dplyr::arrange(B, A) %>% dplyr::pull(UB) %>% rank(ties.method = "max") %>%
-      tibble::tibble(rank = ., cell = c("r00", "ropp", "rself", "r11")) %>%
-      tidyr::pivot_wider(names_from = "cell", values_from = "rank")
-    A_gametype <- A_ranks %>%
+
+    # get row from nitratesgame::game_2x2_structures
+    A_gametype_df <- A_ranks %>%
       dplyr::inner_join(game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
-    B_gametype <- B_ranks %>%
-      dplyr::inner_join(game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
-    if (nrow(A_gametype) == 1 & nrow(B_gametype) == 1) {
-      out_var <- paste0(A_gametype$abbrev,"-",B_gametype$abbrev)
-    } else {
-      out_var <- "ties"
-      # warning("game not found -- likely not ordinal payouts for at least one player.")
-      # out_var <- dplyr::case_when(
-      #   grepl(fb_strategies, nash_strategies) ~ "agreement",
-      #   !grepl(fb_strategies, nash_strategies) ~ "social dilemma",
-      #   TRUE ~ "something unexpected - investigate further"
-      )
+
+    # if row exists, take game abbrev
+    if (nrow(A_gametype_df) == 1) {
+      A_gametype <- A_gametype_df$abbrev
+
+    # if row does not exist, flip the ordinal payouts vector and try again
+    } else { # check to see if game parameters are reversed
+      A_gametype_df <- A_ranks %>% dplyr::rename(r00=r11, rself = ropp, ropp = rself, r11 = r00) %>%
+        dplyr::inner_join(game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
+      if (nrow(A_gametype_df) == 1) {
+        A_gametype <- paste0("r",A_gametype_df$abbrev)
+
+        # if still can't find row, return
+      } else {
+        A_gametype <- "X"
+      }
     }
 
+    # Get B game type
+    B_ranks <- payouts %>% dplyr::arrange(B, A) %>% dplyr::pull(UB) %>% rank(ties.method = "min") %>%
+      tibble::tibble(rank = ., cell = c("r00", "ropp", "rself", "r11")) %>%
+      tidyr::pivot_wider(names_from = "cell", values_from = "rank")
+    B_gametype_df <- B_ranks %>%
+      dplyr::inner_join(game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
+    if (nrow(B_gametype_df) == 1) {
+      B_gametype <- B_gametype_df$abbrev
+    } else { # check to see if game parameters are reversed
+      B_gametype_df <- B_ranks %>% dplyr::rename(r00=r11, rself = ropp, ropp = rself, r11 = r00) %>%
+        dplyr::inner_join(game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
+      if (nrow(B_gametype_df) == 1) {
+        B_gametype <- paste0("r",B_gametype_df$abbrev)
+      } else {
+        B_gametype <- "X"
+      }
+    }
+    out_var <- paste0(A_gametype,"-",B_gametype)
   } else {
     stop("output must be one of solution, NE, FB, or type. Instead it is: ",output,".\n")
   }

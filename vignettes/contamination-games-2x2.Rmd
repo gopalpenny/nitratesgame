@@ -122,19 +122,36 @@ reorder_gametypes <- function(gametype) {
   types <- strsplit(gametype, "-")
   type_reorder <- sapply(types, function(x) paste(sort(x), collapse = "-"))
 }
-mixed_solutions <- mixed_solutions_prep2 %>% 
-  mutate(gametype_reorder = reorder_gametypes(game_type),
-         Cd_lab = paste0("Cd = ",Cd,"*Cs"))
+
+dilemma_ids <- mixed_solutions_prep2 %>% select(NE, FB) %>% 
+  unnest(c("NE","FB")) %>% distinct() %>% filter(NE != FB) %>% 
+  mutate(dilemma_id = row_number())
+
+mixed_solutions <- mixed_solutions_prep2 %>% ungroup() %>%
+  mutate(game_id = row_number(),
+         dilemma = factor(game_dilemma, c("social dilemma", "agreement"), c("Social dilemma", "No dilemma")),
+         gametype_reorder = reorder_gametypes(game_type),
+         Cd_lab = paste0("Cd = ",Cd,"*Cs")) %>%
+  left_join(dilemma_ids, by = c("NE","FB"))
+# payouts_listx<- mixed_solutions %>% filter(dilemma_id == 3) %>% pull(mixed_rescaled)
+# payouts <- payouts_listx[[1]]
 
 mixed_solutions %>% mutate(type = paste0("NE:",NE,"/","FB:",FB)) %>% 
   filter(NE != FB) %>% pull(type) %>% unique()
 ```
 
 
+There are multiple types of social dilemmas:
+
+1. Assurance game: some but not all Nash equilibria are social optimal
+1. Assymetric first best: some but not all FB solutions are also Nash equilibria
+1. Social dilemma: The FB and Nash solutions are mutually exclusive
+
+
 ```{r fig.height = 6, fig.width=6}
 ggplot(mixed_solutions) + 
   geom_tile(aes(p1, p2, fill = gametype_reorder), color = "#555555", size = 0.25) +
-  geom_tile(aes(p1, p2, color = game_dilemma), fill = NA, size = 0.5) +
+  geom_tile(aes(p1, p2, color = dilemma), fill = NA, size = 0.5) +
   scale_x_continuous("Pr(East)",breaks = seq(0,1, by =0.2)) +
   scale_y_continuous("Pr(West)",breaks = seq(0,1, by =0.2)) +
   scale_alpha_manual(values = c(0.4,1)) +
@@ -142,22 +159,63 @@ ggplot(mixed_solutions) +
   facet_grid(config~Cd_lab) + coord_equal() + ggp::t_manu()
 
 ```
+
 
 ```{r fig.height = 6, fig.width=6}
-ggplot(mixed_solutions) + 
-  geom_tile(aes(p1, p2, fill = FB_NE_diff), color = "#555555", size = 0.25) +
-  geom_tile(aes(p1, p2, color = game_dilemma), fill = NA, size = 0.5) +
+p_dilemma_magnitude_grid <- ggplot(mixed_solutions) + 
+  geom_tile(aes(p1, p2, fill = FB_NE_diff), color = "#888888", size = 0.25) +
+  geom_tile(aes(p1, p2, color = dilemma), fill = NA, size = 0.5) +
   scale_x_continuous("Pr(East)",breaks = seq(0,1, by =0.2)) +
   scale_y_continuous("Pr(West)",breaks = seq(0,1, by =0.2)) +
   scale_alpha_manual(values = c(0.4,1)) +
-  scale_color_manual(values = c(NA,"black")) +
-  scale_fill_gradient(low = "#222222", high = "red") +
+  scale_color_manual("", values = c("black",NA)) +
+  scale_fill_gradient("Potential\ncooperative\nbenefits",low = "#EEEEEE", high = "darkred") +
+  guides(color = guide_legend(order = 2), fill = guide_colorbar(order = 1)) +
   facet_grid(config~Cd_lab) + coord_equal() + ggp::t_manu()
 
+p_dilemma_magnitude_grid_nums <- p_dilemma_magnitude_grid + geom_text(aes(p1, p2, label = dilemma_id))
+
+ggsave("fX_2x2_dilemma_grid_nums.pdf", p_dilemma_magnitude_grid_nums, path = "~/Google Drive/_Research projects/CNH/nitrates/nitrate_figs", width = 6, height = 7)
 ```
+
+
 ```{r}
-mixed_solutions %>% select(NE, FB) %>% unnest(c("NE","FB")) %>% distinct() %>% filter(NE != FB)
+unlist_tibble <- function(x) x[[1]]
+
+View(mixed_solutions %>% filter(dilemma_id == 6))
+mixed_solutions_dilemmas <- mixed_solutions %>% #slice(c(117, 125)) %>% 
+  filter(!is.na(dilemma_id)) %>% 
+  filter(dilemma_id != 5 | (dilemma_id == 5 & game_id == 200)) %>%
+  filter(dilemma_id != 2 | (dilemma_id == 2 & game_id == 62)) %>%
+  filter(dilemma_id != 6 | (dilemma_id == 6 & game_id == 170)) %>%
+  group_by(dilemma_id) %>% mutate(dilemma_num = row_number(), dilemma_max = max(FB_NE_diff)) %>%
+  filter(FB_NE_diff == dilemma_max) %>%
+  group_by(dilemma_id, dilemma_max) %>% mutate(dilemma_max_num = row_number()) %>%
+  filter(dilemma_max_num == 1) %>%
+  mutate(plots = map(solutions, function(x) get_2x2_ggplot(x, equilibria = T))) %>% arrange(dilemma_id)
+mixed_solutions_dilemmas %>% pull(plots) %>%
+  patchwork::wrap_plots() + patchwork::plot_annotation(tag_levels = "1")
 ```
+
+```{r}
+p_dilemma_magnitude_grid_examples <- mixed_solutions_dilemmas %>% filter(dilemma_id %in% c(1, 4, 5, 6)) %>% pull(plots) %>%
+  patchwork::wrap_plots() + patchwork::plot_annotation(tag_levels = "1")
+ggsave("fX_2x2_dilemma_grid_examples.pdf", p_dilemma_magnitude_grid_examples, path = "~/Google Drive/_Research projects/CNH/nitrates/nitrate_figs", width = 6, height = 4)
+
+```
+
+
+```{r}
+p_dilemma_magnitude_grid_syms <- p_dilemma_magnitude_grid + 
+  geom_point(data = mixed_solutions %>% filter(dilemma_id %in% c(1, 4, 5, 6),
+                                               game_id %in% mixed_solutions_dilemmas$game_id),
+             aes(p1, p2, shape = as.factor(dilemma_id)), show.legend = FALSE) +
+  scale_shape_manual(values = c(3, 4, 1, 5))
+
+ggsave("fX_2x2_dilemma_grid.pdf", p_dilemma_magnitude_grid_syms, path = "~/Google Drive/_Research projects/CNH/nitrates/nitrate_figs", width = 6, height = 7)
+
+```
+
 
 
 ```{r}

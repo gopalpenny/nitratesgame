@@ -201,22 +201,25 @@ get_2x2_contamination_vector <- function(type, player) {
 #' payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, T)
 #'
 #' weights <- c(0.5, 0.5)
-#' weighted_payouts <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = weights)
+#' weighted_payouts <- get_2x2_weighted_payouts(list(payouts, payouts_ii), weights = weights)
 #' get_2x2_game_solutions(weighted_payouts, "NE")
 #' get_2x2_game_solutions(weighted_payouts, "FB")
 #' get_2x2_game_solutions(weighted_payouts, "type")
+#' get_2x2_game_solutions(weighted_payouts, "dilemma")
 get_2x2_game_solutions <- function(payouts, output = "solution") {
   # get_2x2_cell_NE <- function()
 
   payouts$NE <- sapply(1:4, get_2x2_nash_stability,payouts = payouts)
   payouts$FB <- ifelse(payouts$UA + payouts$UB == max(payouts$UA + payouts$UB), 1, 0)
 
-  nash_strategies <- payouts %>% dplyr::rowwise() %>% dplyr::filter(NE >= 0) %>%
+  nash_strategies_vec <- payouts %>% dplyr::rowwise() %>% dplyr::filter(NE >= 0) %>%
     dplyr::mutate(pure_strategy = paste0("A",A,"B",B)) %>%
-    dplyr::pull(pure_strategy) %>% paste(collapse = ", ")
-  fb_strategies <- payouts %>% rowwise() %>% filter(FB == 1) %>%
+    dplyr::pull(pure_strategy)
+  nash_strategies <- nash_strategies_vec %>% paste(collapse = ", ")
+  fb_strategies_vec <- payouts %>% rowwise() %>% filter(FB == 1) %>%
     dplyr::mutate(pure_strategy = paste0("A",A,"B",B)) %>%
-    dplyr::pull(pure_strategy) %>% paste(collapse = ", ")
+    dplyr::pull(pure_strategy)
+  fb_strategies <- fb_strategies_vec %>% paste(collapse = ", ")
 
   if (output == "solution") {
     out_var <- payouts
@@ -226,8 +229,8 @@ get_2x2_game_solutions <- function(payouts, output = "solution") {
     out_var <- fb_strategies
   } else if (output == "dilemma") {
     out_var <- dplyr::case_when(
-      grepl(fb_strategies, nash_strategies) ~ "agreement",
-      !grepl(fb_strategies, nash_strategies) ~ "social dilemma",
+      all(nash_strategies_vec %in% fb_strategies_vec) ~ "agreement",
+      !all(nash_strategies_vec %in% fb_strategies_vec) ~ "social dilemma",
       TRUE ~ "something unexpected - investigate further"
     )
   } else if (output == "type") {

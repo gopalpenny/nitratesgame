@@ -13,11 +13,45 @@ game_2x2_structures <- tibble::tribble(~order, ~name, ~abbrev, ~r00, ~rself, ~ro
                                        10, "Hero", "Hr", 2, 3, 4, 1,
                                        11, "Battle", "Ba", 1, 3, 4, 2,
                                        12, "Chicken", "Ch", 1, 2, 4, 3,
-                                       0, "Mid Battle", "Mb", 1, 3, 4, 3,
-                                       0, "Mid Compromise", "Mc", 3, 3, 4, 1,
-                                       0, "Midlock", "Mk", 3, 1, 4, 3,
-                                       0, "Mid Hunt", "Mu", 3, 1, 3, 4,
-                                       0, "Mid Peace", "Mp", 3, 3, 1, 4,
-                                       0, "Mid Harmony", "Mh", 1, 3, 3, 4)
+                                       ####
+                                       0, "Mid Battle", "Mb", 1, 2, 4, 2,
+                                       0, "Mid Compromise", "Mc", 2, 2, 4, 1,
+                                       0, "Midlock", "Mk", 2, 1, 4, 2,
+                                       0, "Mid Hunt", "Mu", 2, 1, 2, 4,
+                                       0, "Mid Peace", "Mp", 2, 2, 1, 4,
+                                       0, "Mid Harmony", "Mh", 1, 2, 2, 4,
+                                       ####
+                                       0, "High Hero", "He", 2, 3, 3, 1,
+                                       0, "High Battle", "Hb", 1, 3, 3, 2,
+                                       0, "High Concord", "Hn", 1, 2, 3, 3,
+                                       # 0, "High Chicken", "Hc", 1, 2, 3, 3,
+                                       0, "High Hunt", "Hu", 2, 1, 3, 3,
+                                       # 0, "High Dilemma", "Hd", 2, 1, 3, 3,
+                                       0, "High Coordination", "Ho", 3, 2, 1, 3,
+                                       0, "High Assurance", "Hs", 3, 1, 2, 3,
+                                       0, "High Peace", "Hp", 2, 3, 1, 3,
+                                       0, "High Lock", "Hk", 3, 1, 3, 2,
+                                       0, "High Harmony", "Hh", 1, 3, 2, 3,
+                                       0, "High Compromise", "Hm", 3, 2, 3, 1,
+                                       ####
+                                       0, "Low Battle", "Lb", 1, 3, 4, 1,
+                                       0, "Low Lock", "Lk", 3, 1, 4, 1,
+                                       0, "Low Dilemma", "Ld", 1, 1, 4, 3,
+                                       0, "Low Coordination", "Lo", 3, 1, 1, 4,
+                                       0, "Low Harmony", "Lh", 1, 3, 1, 4,
+                                       0, "Low Concord", "Ln", 1, 1, 3, 4,
+                                       ####
+                                       0, "Double Dilemma", "Dd", 1, 1, 3, 3,
+                                       0, "Double Hero", "De", 1, 3, 3, 1,
+                                       # 0, "Double Compromise", "Dm", 1, 3, 3, 1,
+                                       0, "Double Hunt", "Du", 1, 1, 3, 3,
+                                       0, "Double Coordination", "Do", 3, 1, 1, 3,
+                                       0, "Double Harmony", "Dh", 1, 3, 1, 3,
+                                       ####
+                                       0, "Triple Lock", "Tk", 2, 2, 1, 2,
+                                       0, "Triple Harmony", "Th", 1, 2, 2, 2,
+                                       0, "Basic Dilemma", "Bd", 1, 1, 2, 1,
+                                       0, "Basic Harmony", "Bh", 1, 1, 1, 2,
+                                       0, "Zero", "Ze", 1, 1, 1, 1)
 
 usethis::use_data(game_2x2_structures, overwrite = TRUE)

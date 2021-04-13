@@ -165,7 +165,7 @@ ggplot(mixed_solutions) +
 p_dilemma_magnitude_grid <- ggplot(mixed_solutions) + 
   geom_tile(aes(p1, p2, fill = FB_NE_diff), color = "#888888", size = 0.25) +
   geom_tile(aes(p1, p2, color = dilemma), fill = NA, size = 0.5) +
-  scale_x_continuous("Pr(East)",breaks = seq(0,1, by =0.2)) +
+  scale_x_continuous("Pr(East)",breaks = seq(0,1, by =0.2),labels = c("0","","0.4","","0.8","1")) +
   scale_y_continuous("Pr(West)",breaks = seq(0,1, by =0.2)) +
   scale_alpha_manual(values = c(0.4,1)) +
   scale_color_manual("", values = c("black",NA)) +
@@ -176,13 +176,15 @@ p_dilemma_magnitude_grid <- ggplot(mixed_solutions) +
 p_dilemma_magnitude_grid_nums <- p_dilemma_magnitude_grid + geom_text(aes(p1, p2, label = dilemma_id))
 
 ggsave("fX_2x2_dilemma_grid_nums.pdf", p_dilemma_magnitude_grid_nums, path = "~/Google Drive/_Research projects/CNH/nitrates/nitrate_figs", width = 6, height = 7)
+
+p_dilemma_magnitude_grid_nums
 ```
 
 
 ```{r}
 unlist_tibble <- function(x) x[[1]]
 
-View(mixed_solutions %>% filter(dilemma_id == 6))
+# View(mixed_solutions %>% filter(dilemma_id == 6))
 mixed_solutions_dilemmas <- mixed_solutions %>% #slice(c(117, 125)) %>% 
   filter(!is.na(dilemma_id)) %>% 
   filter(dilemma_id != 5 | (dilemma_id == 5 & game_id == 200)) %>%
@@ -202,6 +204,7 @@ p_dilemma_magnitude_grid_examples <- mixed_solutions_dilemmas %>% filter(dilemma
   patchwork::wrap_plots() + patchwork::plot_annotation(tag_levels = "1")
 ggsave("fX_2x2_dilemma_grid_examples.pdf", p_dilemma_magnitude_grid_examples, path = "~/Google Drive/_Research projects/CNH/nitrates/nitrate_figs", width = 6, height = 4)
 
+p_dilemma_magnitude_grid_examples
 ```
 
 
@@ -213,7 +216,7 @@ p_dilemma_magnitude_grid_syms <- p_dilemma_magnitude_grid +
   scale_shape_manual(values = c(3, 4, 1, 5))
 
 ggsave("fX_2x2_dilemma_grid.pdf", p_dilemma_magnitude_grid_syms, path = "~/Google Drive/_Research projects/CNH/nitrates/nitrate_figs", width = 6, height = 7)
-
+p_dilemma_magnitude_grid_syms
 ```
 
 

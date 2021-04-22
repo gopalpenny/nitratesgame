@@ -9,7 +9,7 @@ get_2x2_game_solutions(payouts, output = "solution")
 \arguments{
 \item{payouts}{List of payouts from get_2x2_payouts}
 
-\item{output}{Either "solution", "NE", "FB", or "type". See Value section.}
+\item{output}{Either "solution", "NE", "FB", or "dilemma", or "type". See Value section.}
 }
 \value{
 The \code{output} variable determines the type of output. The options are:
@@ -18,7 +18,8 @@ The \code{output} variable determines the type of output. The options are:
 columns containing the solution.
 \item \code{"NE"}: the pure strategies where NE == 1 or 0.
 \item \code{"FB"}: the pure strategies where FB == 1.
-\item \code{"type"}: the type of game (e.g., "social dilemma" or "collective synergy").
+\item \code{"dilemma"}: whether the game is a "social dilemma" or "agreement".
+\item \code{"type"}: the payout structure for each player.
 }
 }
 \description{
@@ -36,10 +37,14 @@ the set of pure strategies is a joint optimum, and 0 indicates it is not.
 \examples{
 payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3)
 get_2x2_game_solutions(payouts)
+
+# Note that this function is contained in get_2x2_ggplot, if desired
 get_2x2_ggplot(payouts, equilibria = TRUE)
 payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, T)
 
 weights <- c(0.5, 0.5)
 weighted_payouts <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = weights)
-get_2x2_ggplot(weighted_payouts)
+get_2x2_game_solutions(weighted_payouts, "NE")
+get_2x2_game_solutions(weighted_payouts, "FB")
+get_2x2_game_solutions(weighted_payouts, "type")
 }

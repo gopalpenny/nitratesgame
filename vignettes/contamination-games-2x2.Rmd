@@ -10,10 +10,10 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
+  message = FALSE,
+  warning = FALSE,
   comment = "#>"
 )
-
-out_path <- "~/Google Drive/_Research projects/CNH/nitrates/nitrate_figs"
 ```
 
 ```{r setup}
@@ -29,54 +29,29 @@ library(ggnewscale)
 
 A simple example
 
-```{r fig.width = 4, fig.height = 2}
+```{r fig.width = 3, fig.height = 1.5}
 payouts <- get_2x2_payouts(1, 1, 2, 3)
 get_2x2_ggplot(payouts, TRUE)
 ```
 
 Matrices of games
 
-```{r fig.width = 12, fig.height = 6}
-# Rescale payouts of each payer from c(min(A+B)/2, max(A+B)/2) to c(0, 1)
-rescale_payouts <- function(x) {
-  # payouts <- games$payouts[[1]]
-  rescale_min = min(x$UA + x$UB)/2
-  rescale_max = max(x$UA + x$UB)/2
-  payouts_scaled <- x
-  payouts_scaled$UA = scales::rescale(x$UA, c(0,1), c(rescale_min, rescale_max))
-  payouts_scaled$UB = scales::rescale(x$UB, c(0,1), c(rescale_min, rescale_max))
-
-  return(payouts_scaled)
-}
-
-# rescale_payouts(games$payouts[[1]])
-
+```{r fig.width = 3, fig.height = 6}
 games <- crossing(tA = 1:4, tB = 1:4, nesting(tibble(Cs=c(2,3),Cd=c(3,2)))) %>%
   # filter(tA <= tB) %>%
   rowwise() %>%
-  mutate(payouts = list(get_2x2_payouts(tA=tA, tB=tB, Cs=Cs, Cd=Cd, pos = TRUE)),
-         payouts_scaled = map(list(payouts), rescale_payouts)) %>%
+  mutate(payouts = list(get_2x2_payouts(tA=tA, tB=tB, Cs=Cs, Cd=Cd, pos = TRUE))) %>%
   ungroup() %>%
-  mutate(plots = map(payouts_scaled, function(x) get_2x2_ggplot(x, TRUE)))
+  mutate(plots = map(payouts, function(x) get_2x2_ggplot(x, TRUE)))
 
-# ggsave("nitrates_2player_games_sym.eps", games %>% filter(tA == tB) %>% pull(plots), 
-#        path = out_path, width = 6, height = 6)
-# ggsave("nitrates_2player_games_asym.eps", games %>% filter(tA <= tB) %>% pull(plots), 
-#        path = out_path, width = 6, height = 9)
-
-games %>% filter(Cd == 3) %>% pull(plots) %>%
-  patchwork::wrap_plots(ncol = 4)
-```
-
-```{r fig.width = 3, fig.height = 6}
 p_2x2_symmetric <- games %>% filter(Cd == 3, tA == tB) %>% pull(plots) %>%
   patchwork::wrap_plots(ncol = 1)
-ggsave("2x2_symmetric_normalized.pdf",p_2x2_symmetric, path = out_path, width = 3, height = 6)
 p_2x2_symmetric
 ```
 
+Now create a grid of games using various groundwater configurations. Games can be classified according to a "periodic table" of 2x2 games ([Bruns, 2015](https://www.mdpi.com/2073-4336/6/4/495)). This package has a built-in function (`get_2x2_game_solutions`) for identifying most types of games from the periodic table. It also identifies whether or not the game is a social dilemma (though this aspect should be verified).
 
-```{r}
+```{r fig.width= 6, fig.height= 6}
 # The households / septic configurations
 mixed_configurations <- tribble(~config, ~tA, ~tB, ~prob_name, ~dir,
                            1, 3, 1, "p1", "E",
@@ -96,7 +71,7 @@ mixed_configurations <- tribble(~config, ~tA, ~tB, ~prob_name, ~dir,
                            5, 1, 1, "p3", "N/S")
 
 # realization is the granularity along p1, p2, p3
-realizations <- crossing(p1 = seq(0, 1, by = 1/5), p2 = seq(0, 1, by = 1/5)) %>% 
+realizations <- crossing(p1 = seq(0, 1, by = 1/3), p2 = seq(0, 1, by = 1/3)) %>% 
   filter(p1 + p2 <= 1) %>%
   mutate(p3 = round(1 - p1 - p2,10),
          id = row_number())
@@ -109,13 +84,12 @@ mixed_solutions_prep1a <- mixed_configurations %>%
   rowwise() %>%
   mutate(payouts = list(get_2x2_payouts(tA, tB, Cs, Cd, pos = TRUE))) %>%
   group_by(config, id, Cd, Cs) %>%
-  summarize(mixed = list(get_2x2_weighted_payouts(payouts, prob)),
-            mixed_rescaled = map(mixed, rescale_payouts))
+  summarize(mixed = list(get_2x2_weighted_payouts(payouts, prob)))
 
 mixed_solutions_prep1b <- mixed_solutions_prep1a %>%
-  mutate(solutions = map(mixed_rescaled, get_2x2_game_solutions),
-         NE = map(mixed_rescaled, function(x) get_2x2_game_solutions(x, "NE")),
-         FB = map(mixed_rescaled, function(x) get_2x2_game_solutions(x, "FB")),
+  mutate(solutions = map(mixed, get_2x2_game_solutions),
+         NE = map(mixed, function(x) get_2x2_game_solutions(x, "NE")),
+         FB = map(mixed, function(x) get_2x2_game_solutions(x, "FB")),
          NE_utility = map(solutions, function(x) min((x$UA + x$UB)[x$NE >= 0])),
          FB_utility = map(solutions, function(x) max(x$UA + x$UB))) %>%
   unnest(c("NE","FB", "NE_utility", "FB_utility")) %>%
@@ -123,10 +97,8 @@ mixed_solutions_prep1b <- mixed_solutions_prep1a %>%
 
 mixed_solutions_prep2 <- mixed_solutions_prep1b %>% 
   mutate(FB_NE_diff = FB_utility - NE_utility,
-         game_dilemma = map(mixed_rescaled, function(x) get_2x2_game_solutions(x, "dilemma")),
-         game_type = map(mixed_rescaled, function(x) get_2x2_game_solutions(x, "type"))) %>%
-  mutate(NE_lt_FB = map(solutions, get_dilemma_NE_lt_FB)) %>%
-  unnest("NE_lt_FB") %>%
+         game_dilemma = map(mixed, function(x) get_2x2_game_solutions(x, "dilemma")),
+         game_type = map(mixed, function(x) get_2x2_game_solutions(x, "type"))) %>%
   left_join(realizations, by = c("id")) %>%
   unnest(c("game_type","game_dilemma"))
 
@@ -136,57 +108,16 @@ reorder_gametypes <- function(gametype) {
   type_reorder <- sapply(types, function(x) paste(sort(x), collapse = "-"))
 }
 
-# true social dilemma -- in the FB, both players have utility >= Nash equilibrium
-# in unfair situation, one player has utility in Nash greater than in the FB
-# if there is any Nash equilibrium (that is not the social optimum) where all players have utility <= FB, then return 1
-# otherwise, return 0
-get_dilemma_NE_lt_FB <- function(payouts) {
-  NE_lt_FB <- 0
-  for (i in which(payouts$NE == 1)) {
-    for (j in which(payouts$FB == 1)) {
-      if (i != j & payouts$UA[i] <= payouts$UA[j] & payouts$UB[i] <= payouts$UB[j]) {
-        NE_lt_FB <- 1
-      }
-    }
-  }
-  return(NE_lt_FB)
-}
-```
-
-
-```{r}
-dilemma_ids <- mixed_solutions_prep2 %>% 
-  select(NE, FB, NE_lt_FB) %>% 
-  # unnest(c("NE","FB", "NE_lt_FB")) %>% 
-  distinct() %>% filter(NE != FB) %>% 
-  mutate(dilemma_id = row_number())
-
 mixed_solutions <- mixed_solutions_prep2 %>% ungroup() %>%
   mutate(game_id = row_number(),
          dilemma = factor(game_dilemma, c("social dilemma", "agreement"), c("Social dilemma", "No dilemma")),
          gametype_reorder = reorder_gametypes(game_type),
          Cd_lab = paste0("Cd = ",Cd,"*Cs")) %>%
-  left_join(dilemma_ids, by = c("NE","FB", "NE_lt_FB")) %>%
   mutate(config_fct = factor(config, levels = 1:5, labels = c("I", "II", "III", "IV", "V")))
-# payouts_listx<- mixed_solutions %>% filter(dilemma_id == 3) %>% pull(mixed_rescaled)
-# payouts <- payouts_listx[[1]]
 
-mixed_solutions %>% mutate(type = paste0("NE:",NE,"/","FB:",FB)) %>% 
-  filter(NE != FB) %>% pull(type) %>% unique()
-```
-
-
-There are multiple types of social dilemmas:
-
-1. Assurance game: some but not all Nash equilibria are social optimal
-1. Assymetric first best: some but not all FB solutions are also Nash equilibria
-1. Social dilemma: The FB and Nash solutions are mutually exclusive
-
-
-```{r fig.height = 6, fig.width=6}
 rand_colors = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = T)]
 set.seed(120)
-n <- 26
+n <- 30
 rand_colors26 <- sample(rand_colors, n)
 ggplot(mixed_solutions) + 
   geom_tile(aes(p1, p2, fill = gametype_reorder), color = "#555555", size = 0.25) +
@@ -199,146 +130,3 @@ ggplot(mixed_solutions) +
   facet_grid(config_fct~Cd_lab) + coord_equal() + ggp::t_manu()
 
 ```
-
-
-```{r fig.height = 6, fig.width=10}
-chroma <- c(10, 50)
-luminance <- c(95, 40)
-uf_col_i <- 180
-uf_col_d <- 45
-p_dilemma_magnitude_grid <- ggplot(mixed_solutions) + 
-  geom_tile(data = mixed_solutions %>% filter(is.na(dilemma_id) | dilemma_id == 3),
-            aes(p1, p2), fill = NA, color = "#888888", size = 0.25) +
-  # Prisoner's dilemma
-  geom_tile(data = mixed_solutions %>% filter(dilemma_id %in% c(6)),
-            aes(p1, p2, fill = FB_NE_diff / 2), color = "#888888", size = 0.25) +
-  scale_fill_stepsn("PD",breaks = seq(0.2,0.8,by=0.2), colors = colorspace::sequential_hcl(n = 5, h = 350, c = chroma, l = luminance), limits = c(0, 1), show.limits = TRUE) +
-  # Assurance game
-  new_scale("fill") +
-  geom_tile(data = mixed_solutions %>% filter(dilemma_id %in% c(4)),
-            aes(p1, p2, fill = FB_NE_diff / 2), color = "#888888", size = 0.25) +
-
-  scale_fill_stepsn("AG",breaks = seq(0.2,0.8,by=0.2), colors = colorspace::sequential_hcl(n = 5, h = 40, c = chroma, l = luminance), limits = c(0, 1), show.limits = TRUE) +
-  # Unfair - i
-  new_scale("fill") +
-  geom_tile(data = mixed_solutions %>% filter(dilemma_id %in% c(7,8)),
-            aes(p1, p2, fill = FB_NE_diff / 2), color = "#888888", size = 0.25) +
-  scale_fill_stepsn("UF-i",breaks = seq(0.2,0.8,by=0.2), colors = colorspace::sequential_hcl(n = 5, h = uf_col_i, c = chroma, l = luminance), limits = c(0, 1), show.limits = TRUE) +# prev : h = 220
-  # Unfair - ii
-  new_scale("fill") +
-  geom_tile(data = mixed_solutions %>% filter(dilemma_id %in% c(2, 5)),
-            aes(p1, p2, fill = FB_NE_diff / 2), color = "#888888", size = 0.25) +
-  scale_fill_stepsn("UF-ii",breaks = seq(0.2,0.8,by=0.2), colors = colorspace::sequential_hcl(n = 5, h = uf_col_i + uf_col_d, c = chroma, l = luminance), limits = c(0, 1), show.limits = TRUE) + # prev : h = 160
-  # Unfair - iii
-  new_scale("fill") +
-  geom_tile(data = mixed_solutions %>% filter(dilemma_id %in% c(1)),
-            aes(p1, p2, fill = FB_NE_diff / 2), color = "#888888", size = 0.25) +
-  scale_fill_stepsn("UF-iii",breaks = seq(0.2,0.8,by=0.2), colors = colorspace::sequential_hcl(n = 5, h = uf_col_i + uf_col_d * 2, c = chroma, l = luminance), limits = c(0, 1), show.limits = TRUE) +# prev : NA
-  geom_tile(data = mixed_solutions,
-            aes(p1, p2, color = dilemma), fill = NA, size = 0.5) +
-  scale_x_continuous("Pr(East)",breaks = seq(0,1, by =0.2),labels = c("0","","0.4","","0.8","1")) +
-  scale_y_continuous("Pr(West)",breaks = seq(0,1, by =0.2)) +
-  scale_alpha_manual(values = c(0.4,1)) +
-  scale_color_manual("", values = c("black",NA)) +
-  guides(color = guide_legend(order = 2), fill = guide_colorbar(order = 1)) +
-  facet_grid(config_fct~Cd_lab) + coord_equal() + ggp::t_manu() %+replace% theme(legend.box = "horizontal")
-
-p_dilemma_magnitude_grid_nums <- p_dilemma_magnitude_grid + geom_text(aes(p1, p2, label = dilemma_id))
-
-# ggsave("fX_2x2_dilemma_grid_nums.pdf", p_dilemma_magnitude_grid_nums, path = "~/Google Drive/_Research projects/CNH/nitrates/nitrate_figs", width = 6, height = 7)
-
-p_dilemma_magnitude_grid_nums
-```
-
-
-```{r}
-unlist_tibble <- function(x) x[[1]]
-
-# View(mixed_solutions %>% filter(dilemma_id == 6))
-mixed_solutions_dilemmas <- mixed_solutions %>% #slice(c(117, 125)) %>% 
-  filter(!is.na(dilemma_id)) %>% 
-  filter(dilemma_id != 5 | (dilemma_id == 5 & game_id == 200)) %>%
-  filter(dilemma_id != 2 | (dilemma_id == 2 & game_id == 62)) %>%
-  filter(dilemma_id != 7 | (dilemma_id == 7 & game_id == 170)) %>%
-  group_by(dilemma_id) %>% mutate(dilemma_num = row_number(), dilemma_max = max(FB_NE_diff)) %>%
-  filter(FB_NE_diff == dilemma_max) %>%
-  group_by(dilemma_id, dilemma_max) %>% mutate(dilemma_max_num = row_number()) %>%
-  filter(dilemma_max_num == 1) %>%
-  mutate(plots = map(solutions, function(x) get_2x2_ggplot(x, equilibria = T))) %>% arrange(dilemma_id)
-mixed_solutions_dilemmas %>% pull(plots) %>%
-  patchwork::wrap_plots() + patchwork::plot_annotation(tag_levels = "1")
-```
-
-```{r}
-p_dilemma_magnitude_grid_examples <- mixed_solutions_dilemmas %>% filter(dilemma_id %in% c(1, 4, 5, 6)) %>% pull(plots) %>%
-  patchwork::wrap_plots() + patchwork::plot_annotation(tag_levels = "1")
-ggsave("fX_2x2_dilemma_grid_examples.pdf", p_dilemma_magnitude_grid_examples, path = out_path, width = 6, height = 4)
-
-p_dilemma_magnitude_grid_examples
-```
-
-
-```{r fig.height = 6, fig.width=10}
-mixed_solutions_examples <- mixed_solutions %>% filter((config == 1 & p1 == 0.8 & p2 == 0.2) |
-                                                         (config == 3 & as.character(p1) == "0.6" & p2 == 0.4) |
-                                                         # (config == 4 & as.character(p1) %in% as.character(c(0.4, 0.6, 0.8)) & p2 == 0.2 & Cd == 3)
-                                                         (config == 4 & Cd == 3 & paste(p1, p2) %in% c("0.2 0.6", "0.4 0.4", "0.6 0.2"))
-                                                       ) %>%
-  group_by(config) %>% arrange(config, Cd, p1) %>% mutate(shape = row_number())
-mixed_solutions %>% filter(as.character(p1) == "0.6")
-p_dilemma_magnitude_grid_syms <- p_dilemma_magnitude_grid + 
-  # geom_point(data = mixed_solutions %>% filter(dilemma_id %in% c(1, 4, 5, 6),
-  #                                              game_id %in% mixed_solutions_dilemmas$game_id),
-  #            aes(p1, p2, shape = as.factor(dilemma_id)), show.legend = FALSE) +
-  geom_point(data = mixed_solutions_examples, aes(p1, p2, shape = as.factor(shape)), show.legend = FALSE) +
-  scale_shape_manual(values = c(3, 1, 4, 5))
-
-ggsave("fX_2x2_dilemma_grid.pdf", p_dilemma_magnitude_grid_syms, path = out_path, width = 15, height = 7)
-p_dilemma_magnitude_grid_syms
-```
-
-```{r}
-p_solutions_selected <- mixed_solutions_examples  %>%
- # mutate(across(c("id","Cd"), function(x) x * 10))
-  mutate(solutions_round = map(solutions, function(x) mutate(x, across(c("UA","UB"), function(x) round(x,1)))),
-         plots = map(solutions_round, function(x) get_2x2_ggplot(x, equilibria = T))) %>% 
-  pull(plots) %>%
-  patchwork::wrap_plots(ncol = 3)# + patchwork::plot_annotation(tag_levels = "1")
-
-ggsave("fX_2x2_dilemma_grid_selected.pdf", p_solutions_selected, path = out_path, width = 8, height = 4)
-
-p_solutions_selected
-```
-
-```{r}
-# mixed_solutions %>% 
-#   filter(config == 5 & as.character(p1) %in% as.character(c(0.6,0.8,0.1)) & p2 == 0) %>%
-#   mutate(solutions_round = map(solutions, function(x) mutate(x, across(c("UA","UB"), function(x) round(x,1)))),
-#          plots = map(solutions_round, function(x) get_2x2_ggplot(x, equilibria = T))) %>% 
-#   pull(plots) %>%
-#   patchwork::wrap_plots(ncol = 5) + patchwork::plot_annotation(tag_levels = "1")
-
-```
-
-
-
-```{r}
-config5 <- mixed_solutions %>% filter(Cd == 2, config == 5, p1 == 1) %>%
-  unnest("mixed")
-get_2x2_ggplot(config5, T)
-```
-
-```{r fig.height = 9, fig.width = 7}
-mixed_solutions_conflicts <- mixed_solutions %>% mutate(type = paste0("NE:",NE,"/","FB:",FB)) %>% 
-  filter(NE != FB) %>% group_by(type) %>%
-  mutate(type_rank = row_number(),
-         type_n = n()) %>%
-  filter(type_rank == 1)
-  # summarize(mixed = map(mixed, function(x) x[[1]])) 
-  
-mixed_solutions_conflicts %>%
-  mutate(plots = map(mixed, function(x) get_2x2_ggplot(x, TRUE))) %>%
-  pull(plots) %>%
-  patchwork::wrap_plots(ncol = 3)
-```
-

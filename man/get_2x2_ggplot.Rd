@@ -17,12 +17,12 @@ get_2x2_ggplot(payouts, equilibria = FALSE, nsmall = 2)
 Generate ggplot of 2x2 payouts
 }
 \examples{
-payouts <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)
+payouts <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, TRUE)
 get_2x2_ggplot(payouts)
 
-payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 1, T)
+payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 1, TRUE)
 get_2x2_ggplot(payouts, TRUE)
 
-payouts <- get_2x2_payouts(4, 4, Cs = 1, Cd = 2, T)
+payouts <- get_2x2_payouts(4, 4, Cs = 1, Cd = 2, TRUE)
 get_2x2_ggplot(payouts, TRUE)
 }

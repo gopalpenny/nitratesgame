@@ -22,7 +22,7 @@ would benefit by switching their action.
 Get 2x2 Nash equilibrium and first best
 }
 \examples{
-payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3, T)
+payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3, TRUE)
 payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3)
 \dontrun{
 get_2x2_nash_stability(payouts, 4)

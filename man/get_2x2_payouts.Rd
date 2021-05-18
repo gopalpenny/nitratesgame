@@ -34,8 +34,8 @@ given their player type, decision space (upgrade septic or not),
 and associated costs.
 }
 \examples{
-payouts_pos <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)
-payouts_neg <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, F)
+payouts_pos <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, TRUE)
+payouts_neg <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, FALSE)
 
-get_2x2_ggplot(payouts_pos, T)
+get_2x2_ggplot(payouts_pos, TRUE)
 }

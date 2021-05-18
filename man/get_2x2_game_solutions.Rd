@@ -40,7 +40,7 @@ get_2x2_game_solutions(payouts)
 
 # Note that this function is contained in get_2x2_ggplot, if desired
 get_2x2_ggplot(payouts, equilibria = TRUE)
-payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, T)
+payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, TRUE)
 
 weights <- c(0.5, 0.5)
 weighted_payouts <- get_2x2_weighted_payouts(list(payouts, payouts_ii), weights = weights)

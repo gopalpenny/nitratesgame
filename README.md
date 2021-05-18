@@ -18,19 +18,18 @@ main tools for analysis:
 
 ## Installation
 
-You can install the released version of nitratesgame from
-[CRAN](https://CRAN.R-project.org) with:
-
-``` r
-install.packages("nitratesgame")
-```
-
-And the development version from [GitHub](https://github.com/) with:
+You can install the development version from
+[GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
 devtools::install_github("gopalpenny/nitratesgame")
 ```
+
+## More information
+
+The website for `nitratesgame` can be found on
+[github.io](https://gopalpenny.github.io/nitratesgame/).
 
 ## 2x2 games (Example)
 

@@ -75,8 +75,50 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+<div id="nitratesgame" class="section level1">
+<div class="page-header"><h1 class="hasAnchor">
+<a href="#nitratesgame" class="anchor"></a>nitratesgame</h1></div>
+<!-- badges: start -->
+<!-- badges: end -->
+<p>The goal of nitratesgame is to provide a simple framework for analyzing a game theoretic model of community nitrate contamination. It offers two main tools for analysis:</p>
+<ol>
+<li>A tool for generating payout structures and solutions for 2x2 games</li>
+<li>A groundwater model for generating <em>simple</em> estimates of the probability of contamination for a well that sits within a grid of households in a neighborhood.</li>
+</ol>
+<div id="installation" class="section level2">
+<h2 class="hasAnchor">
+<a href="#installation" class="anchor"></a>Installation</h2>
+<p>You can install the development version from <a href="https://github.com/">GitHub</a> with:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># install.packages("devtools")</span>
+<span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span><span class="op">(</span><span class="st">"gopalpenny/nitratesgame"</span><span class="op">)</span></code></pre></div>
+</div>
+<div id="more-information" class="section level2">
+<h2 class="hasAnchor">
+<a href="#more-information" class="anchor"></a>More information</h2>
+<p>The website for <code>nitratesgame</code> can be found on <a href="https://gopalpenny.github.io/nitratesgame/">github.io</a>.</p>
+</div>
+<div id="2x2-games-example" class="section level2">
+<h2 class="hasAnchor">
+<a href="#2x2-games-example" class="anchor"></a>2x2 games (Example)</h2>
+<p>This is a basic example which shows you how to visualize a 2x2 game:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">nitratesgame</span><span class="op">)</span>
+
+<span class="co"># tA: player type A</span>
+<span class="co"># tB: player type B</span>
+<span class="co"># Cs: cost of upgrading septic system</span>
+<span class="co"># Cd: cost of contamination</span>
+<span class="va">payouts</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_2x2_payouts.html">get_2x2_payouts</a></span><span class="op">(</span>tA <span class="op">=</span> <span class="fl">1</span>, tB <span class="op">=</span> <span class="fl">1</span>, Cs <span class="op">=</span> <span class="fl">2</span>, Cd <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>
+<span class="fu"><a href="reference/get_2x2_ggplot.html">get_2x2_ggplot</a></span><span class="op">(</span><span class="va">payouts</span>, <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<p><img src="reference/figures/README-example-2x2-1.png" width="100%"></p>
+</div>
+<div id="groundwater-model" class="section level2">
+<h2 class="hasAnchor">
+<a href="#groundwater-model" class="anchor"></a>Groundwater model</h2>
+<p>See the vignettes for background and details about using the groundwater model.</p>
+</div>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

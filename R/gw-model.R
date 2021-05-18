@@ -65,6 +65,7 @@ get_hh_grid <- function(density, area) {
 #' @param hh_array_type either "septic" or "well" describing the
 #'   \code{hh_array}. See Details below.
 #' @param ... See details for optional inputs
+#' @importFrom rlang .data
 #' @export
 #' @description This function prepares an array of septic systems or private
 #' wells for the groundwater model function
@@ -166,15 +167,15 @@ get_septic_well_array <- function(hh_array, hh_array_type, ...) {
   # wells$well_rect <- mapply(get_well_rectangle,theta1 = wells$theta1, theta2 = wells$theta2, phi1 = wells$phi1, phi2 = wells$phi2)
 
   wells <- wells %>%
-    dplyr::mutate(theta = as.numeric(atan2(y, x)),
-                  dtheta = atan(as.numeric(rs/rij)), # this is the width of the well
-                  origin = ifelse(as.numeric(x) == 0, as.numeric(y) == 0, FALSE),
-                  theta1 = ifelse(origin, -pi, theta - dtheta),
-                  theta2 = ifelse(origin, pi, theta + dtheta),
-                  phi1 = ifelse(origin, as.numeric(atan(z1 / rs)), as.numeric(atan(z1 / rij))),
-                  phi2 = ifelse(origin, pi/2, as.numeric(atan(z2 / rij)))) %>% tibble::as_tibble() %>%
+    dplyr::mutate(theta = as.numeric(atan2(.data$y, .data$x)),
+                  dtheta = atan(as.numeric(.data$rs/.data$rij)), # this is the width of the well
+                  origin = ifelse(as.numeric(.data$x) == 0, as.numeric(.data$y) == 0, FALSE),
+                  theta1 = ifelse(.data$origin, -pi, .data$theta - .data$dtheta),
+                  theta2 = ifelse(.data$origin, pi, .data$theta + .data$dtheta),
+                  phi1 = ifelse(.data$origin, as.numeric(atan(.data$z1 / .data$rs)), as.numeric(atan(.data$z1 / .data$rij))),
+                  phi2 = ifelse(.data$origin, pi/2, as.numeric(atan(.data$z2 / .data$rij)))) %>% tibble::as_tibble() %>%
     dplyr::rowwise() %>%
-    dplyr::mutate(well_rect = get_well_rectangle(theta1, theta2, phi1, phi2))
+    dplyr::mutate(well_rect = get_well_rectangle(.data$theta1, .data$theta2, .data$phi1, .data$phi2))
 
   return(wells)
 }
@@ -206,6 +207,7 @@ shift_hh_grid_pi <- function(wells_array, theta_range = c(-pi, pi)) {
 #' Get probability of contamination
 #'
 #' @inheritParams get_intersection_probability
+#' @importFrom rlang .data
 #' @keywords internal
 #' @details
 #' Careful: this won't work if theta_range cross over -pi or pi
@@ -219,27 +221,27 @@ get_union_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_r
   # this line removes points where more than 2 points make a line. Points are removed
   # from the polygon (including desired vertices) but it's okay because the unique values
   # of X are preserved. The unique values of Y are also preserved. But some unique combinations are lost.
-  well_union_pts <- sf::st_coordinates(wells_union) %>% tibble::as_tibble() %>% dplyr::select(X,Y) %>%
+  well_union_pts <- sf::st_coordinates(wells_union) %>% tibble::as_tibble() %>% dplyr::select(c("X","Y")) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(remove = (X == dplyr::lag(X,1) & X == dplyr::lag(X,2)) | (Y == dplyr::lag(Y,1) & Y == dplyr::lag(Y,2)) ,
-           remove = ifelse(is.na(remove),FALSE,remove)) %>%
-    dplyr::filter(!remove)
+    dplyr::mutate(remove = (.data$X == dplyr::lag(.data$X,1) & .data$X == dplyr::lag(.data$X,2)) | (.data$Y == dplyr::lag(.data$Y,1) & .data$Y == dplyr::lag(.data$Y,2)) ,
+           remove = ifelse(is.na(.data$remove),FALSE,.data$remove)) %>%
+    dplyr::filter(!.data$remove)
   theta_breaks <- sort(unique(well_union_pts$X)) # all breaks long theta axis
 
   # get each polygon within theta_breaks[i], theta_breaks[i+1]
-  if (show_progress) {pb <- txtProgressBar(min = 0, max = length(theta_breaks) - 1, style = 3)}
+  if (show_progress) {pb <- utils::txtProgressBar(min = 0, max = length(theta_breaks) - 1, style = 3)}
   for (i in 1:(length(theta_breaks)-1)) {
-    if(show_progress) {setTxtProgressBar(pb, i)}
+    if(show_progress) {utils::setTxtProgressBar(pb, i)}
     theta_domain <- get_well_rectangle(theta_breaks[i], theta_breaks[i+1], 0, pi/2)
     wells_theta_break <- sf::st_intersection(wells_union, theta_domain)
     if (any(grepl("GEOMETRYCOLLECTION",class(wells_theta_break)))) {
       wells_theta_break <- sf::st_collection_extract(wells_theta_break)
     }
-    wells_theta_break_pts <- sf::st_coordinates(wells_theta_break) %>% tibble::as_tibble() %>% dplyr::select(X,Y) %>%
+    wells_theta_break_pts <- sf::st_coordinates(wells_theta_break) %>% tibble::as_tibble() %>% dplyr::select(c("X","Y")) %>%
       dplyr::ungroup() %>%
-      dplyr::mutate(remove = (X == dplyr::lag(X,1) & X == dplyr::lag(X,2)) | (Y == dplyr::lag(Y,1) & Y == dplyr::lag(Y,2)) ,
-             remove = ifelse(is.na(remove),FALSE,remove)) %>%
-      dplyr::filter(!remove)
+      dplyr::mutate(remove = (.data$X == dplyr::lag(.data$X,1) & .data$X == dplyr::lag(.data$X,2)) | (.data$Y == dplyr::lag(.data$Y,1) & .data$Y == dplyr::lag(.data$Y,2)) ,
+             remove = ifelse(is.na(.data$remove),FALSE,.data$remove)) %>%
+      dplyr::filter(!.data$remove)
 
     # ggplot() + geom_sf(data=wells_union,aes(),fill="gray") +
     #   ylim(c(0,0.1)) + xlim(c(-pi,-pi+0.2))
@@ -255,19 +257,19 @@ get_union_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_r
         # note that the intersection will return a linestring or sfc_GEOMETRYCOLLECTION (points) if the area is empty
         combined_rectangles <- combined_rectangles
       } else {
-        wells_phi_break_pts <- sf::st_coordinates(wells_phi_break) %>% tibble::as_tibble() %>% dplyr::select(X,Y) %>%
+        wells_phi_break_pts <- sf::st_coordinates(wells_phi_break) %>% tibble::as_tibble() %>% dplyr::select(c("X","Y")) %>%
           dplyr::ungroup() %>%
-          dplyr::mutate(remove = (X == dplyr::lag(X,1) & X == dplyr::lag(X,2)) | (Y == dplyr::lag(Y,1) & Y == dplyr::lag(Y,2)) ,
-                 remove = ifelse(is.na(remove),FALSE,remove)) %>%
+          dplyr::mutate(remove = (.data$X == dplyr::lag(.data$X,1) & .data$X == dplyr::lag(.data$X,2)) | (.data$Y == dplyr::lag(.data$Y,1) & .data$Y == dplyr::lag(.data$Y,2)) ,
+                 remove = ifelse(is.na(.data$remove),FALSE,.data$remove)) %>%
           dplyr::filter(!remove)
         if (i == 1 & j == 1) {
           combined_rectangles <-
             with(wells_phi_break_pts,
-                 data.frame(theta1 = min(X), theta2 = max(X), phi1 = min(Y), phi2 = max(Y)))
+                 data.frame(theta1 = min(.data$X), theta2 = max(.data$X), phi1 = min(.data$Y), phi2 = max(.data$Y)))
         } else {
           combined_rectangles <- combined_rectangles %>%
             rbind(with(wells_phi_break_pts,
-                       data.frame(theta1 = min(X), theta2 = max(X), phi1 = min(Y), phi2 = max(Y))))
+                       data.frame(theta1 = min(.data$X), theta2 = max(.data$X), phi1 = min(.data$Y), phi2 = max(.data$Y))))
         }
 
         # ggplot() + geom_sf(data=wells_phi_break,aes(),fill="gray") + ylim(c(0,0.1))
@@ -279,21 +281,21 @@ get_union_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_r
   # convert polygons to probabilities
   # aquifer <- data.frame(theta_min = theta_min, theta_max = theta_max, alpha_min = alpha_min, alpha_max = alpha_max)
   probs <- combined_rectangles %>% tibble::as_tibble() %>%
-    dplyr::mutate(alpha1_orig = 1/tan(phi2),
+    dplyr::mutate(alpha1_orig = 1/tan(.data$phi2),
                   alpha1_adj = dplyr::case_when(
-                    alpha1_orig < alpha_min~alpha_min,
-                    alpha1_orig > alpha_max~alpha_max,
-                    TRUE~alpha1_orig),
-                  alpha2_orig = 1/tan(phi1),
+                    .data$alpha1_orig < alpha_min~alpha_min,
+                    .data$alpha1_orig > alpha_max~alpha_max,
+                    TRUE~.data$alpha1_orig),
+                  alpha2_orig = 1/tan(.data$phi1),
                   alpha2_adj = dplyr::case_when(
-                    alpha2_orig < alpha_min~alpha_min,
-                    alpha2_orig > alpha_max~alpha_max,
+                    .data$alpha2_orig < alpha_min~alpha_min,
+                    .data$alpha2_orig > alpha_max~alpha_max,
                     TRUE~alpha2_orig),
-                  d_alpha = alpha2_adj - alpha1_adj,
-                  d_theta = theta2 - theta1,
-                  p_theta = d_theta / (theta_max - theta_min),
-                  p_z = d_alpha / (alpha_max - alpha_min),
-                  p = p_theta * p_z) ## NEED TO FIX THIS LINE -- E.G., THERE WILL BE AN PROBLEM if THETA2 IS GREATER THAN THETA_MAX
+                  d_alpha = .data$alpha2_adj - .data$alpha1_adj,
+                  d_theta = .data$theta2 - .data$theta1,
+                  p_theta = .data$d_theta / (theta_max - theta_min),
+                  p_z = .data$d_alpha / (alpha_max - alpha_min),
+                  p = .data$p_theta * .data$p_z) ## NEED TO FIX THIS LINE -- E.G., THERE WILL BE AN PROBLEM if THETA2 IS GREATER THAN THETA_MAX
   # sum(probs$p)
 
   return(probs)
@@ -308,6 +310,7 @@ get_union_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_r
 #' @param self_treat Logical. If \code{TRUE}, any well at (x = 0, y = 0) will be removed
 #' @param return_option Either 1 or 2. See Return, below
 #' @param show_progress Logical that determines if progress bar is shown
+#' @importFrom rlang .data
 #' @export
 #' @details
 #' Note that theta_range must not cross -pi or pi.
@@ -324,7 +327,7 @@ get_intersection_probability <- function(wells_array, theta_range = c(-pi, pi), 
   }
 
   if (self_treat) {
-    wells_array <- wells_array %>% filter(as.numeric(rij) > 0)
+    wells_array <- wells_array %>% dplyr::filter(as.numeric(.data$rij) > 0)
   }
   wells_array <- shift_hh_grid_pi(wells_array, theta_range = theta_range)
   probs <- get_union_probability(wells_array, theta_range = theta_range, alpha_range = alpha_range, show_progress = show_progress)

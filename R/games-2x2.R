@@ -23,10 +23,10 @@
 #' \item payouts: Payout structure for each cell for A, B
 #' }
 #' @examples
-#' payouts_pos <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)
-#' payouts_neg <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, F)
+#' payouts_pos <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, TRUE)
+#' payouts_neg <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, FALSE)
 #'
-#' get_2x2_ggplot(payouts_pos, T)
+#' get_2x2_ggplot(payouts_pos, TRUE)
 get_2x2_payouts <- function(tA, tB, Cs, Cd, pos = FALSE) {
   if(pos) { # adj adjusts the utility by Cs + Cd to obtain positive utilities
     adj <- Cs + Cd
@@ -41,12 +41,12 @@ get_2x2_payouts <- function(tA, tB, Cs, Cd, pos = FALSE) {
     dplyr::mutate(
       tA = tA,
       tB = tB,
-      Cs_A = -A*Cs,
-      Cs_B = -B*Cs,
-      Cd_A = -pmax(C_A[1]*(1-A), C_B[1]*(1-B))*Cd,
-      Cd_B = -pmax(C_A[2]*(1-A), C_B[2]*(1-B))*Cd,
-      UA = Cs_A + Cd_A + adj,
-      UB = Cs_B + Cd_B + adj)
+      Cs_A = -.data$A*Cs,
+      Cs_B = -.data$B*Cs,
+      Cd_A = -pmax(C_A[1]*(1-.data$A), C_B[1]*(1-.data$B))*Cd,
+      Cd_B = -pmax(C_A[2]*(1-.data$A), C_B[2]*(1-.data$B))*Cd,
+      UA = .data$Cs_A + .data$Cd_A + adj,
+      UB = .data$Cs_B + .data$Cd_B + adj)
   return(df)
 }
 
@@ -57,19 +57,22 @@ get_2x2_payouts <- function(tA, tB, Cs, Cd, pos = FALSE) {
 #' @param payouts Tibble of payouts from get_2x2_payouts
 #' @param equilibria If \code{TRUE}, highlight equilibria
 #' @param nsmall Used for rounding payouts
+#' @importFrom rlang .data
 #' @export
 #' @examples
-#' payouts <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)
+#' payouts <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, TRUE)
 #' get_2x2_ggplot(payouts)
 #'
-#' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 1, T)
+#' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 1, TRUE)
 #' get_2x2_ggplot(payouts, TRUE)
 #'
-#' payouts <- get_2x2_payouts(4, 4, Cs = 1, Cd = 2, T)
+#' payouts <- get_2x2_payouts(4, 4, Cs = 1, Cd = 2, TRUE)
 #' get_2x2_ggplot(payouts, TRUE)
 get_2x2_ggplot <- function(payouts, equilibria = FALSE, nsmall = 2) {
+  x <- y <- label <- x1 <- y1 <- x2 <- y2 <- B <- A <- NULL
+
   payouts <- payouts %>%
-    dplyr::mutate(payouts = paste(round(UA,nsmall),round(UB,nsmall),sep=", "))
+    dplyr::mutate(payouts = paste(round(.data$UA,nsmall),round(.data$UB,nsmall),sep=", "))
   df_lines <- tibble::tribble(~x1, ~x2, ~y1, ~y2,
                       -1, 1.5, -0.5, -0.5,
                       -1, 1.5, 0.5, 0.5,
@@ -148,13 +151,13 @@ get_2x2_ggplot <- function(payouts, equilibria = FALSE, nsmall = 2) {
 #' }
 #' @keywords internal
 #' @examples
-#' payouts <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)
+#' payouts <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, TRUE)
 #' get_2x2_ggplot(payouts)
 #'
-#' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 1, T)
+#' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 1, TRUE)
 #' get_2x2_ggplot(payouts)
 #'
-#' payouts <- get_2x2_payouts(4, 4, Cs = 1, Cd = 2, T)
+#' payouts <- get_2x2_payouts(4, 4, Cs = 1, Cd = 2, TRUE)
 #' get_2x2_ggplot(payouts)
 get_2x2_contamination_vector <- function(type, player) {
   if (player == "A") {
@@ -191,6 +194,7 @@ get_2x2_contamination_vector <- function(type, player) {
 #' \item \code{"dilemma"}: whether the game is a "social dilemma" or "agreement".
 #' \item \code{"type"}: the payout structure for each player.
 #' }
+#' @importFrom rlang .data
 #' @export
 #' @examples
 #' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3)
@@ -198,7 +202,7 @@ get_2x2_contamination_vector <- function(type, player) {
 #'
 #' # Note that this function is contained in get_2x2_ggplot, if desired
 #' get_2x2_ggplot(payouts, equilibria = TRUE)
-#' payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, T)
+#' payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, TRUE)
 #'
 #' weights <- c(0.5, 0.5)
 #' weighted_payouts <- get_2x2_weighted_payouts(list(payouts, payouts_ii), weights = weights)
@@ -208,17 +212,18 @@ get_2x2_contamination_vector <- function(type, player) {
 #' get_2x2_game_solutions(weighted_payouts, "dilemma")
 get_2x2_game_solutions <- function(payouts, output = "solution") {
   # get_2x2_cell_NE <- function()
+  r11 <- ropp <- rself <- r00 <- NULL
 
   payouts$NE <- sapply(1:4, get_2x2_nash_stability,payouts = payouts)
   payouts$FB <- ifelse(payouts$UA + payouts$UB == max(payouts$UA + payouts$UB), 1, 0)
 
-  nash_strategies_vec <- payouts %>% dplyr::rowwise() %>% dplyr::filter(NE >= 0) %>%
-    dplyr::mutate(pure_strategy = paste0("A",A,"B",B)) %>%
-    dplyr::pull(pure_strategy)
+  nash_strategies_vec <- payouts %>% dplyr::rowwise() %>% dplyr::filter(.data$NE >= 0) %>%
+    dplyr::mutate(pure_strategy = paste0("A",.data$A,"B",.data$B)) %>%
+    dplyr::pull("pure_strategy")
   nash_strategies <- nash_strategies_vec %>% paste(collapse = ", ")
-  fb_strategies_vec <- payouts %>% dplyr::rowwise() %>% dplyr::filter(FB == 1) %>%
-    dplyr::mutate(pure_strategy = paste0("A",A,"B",B)) %>%
-    dplyr::pull(pure_strategy)
+  fb_strategies_vec <- payouts %>% dplyr::rowwise() %>% dplyr::filter(.data$FB == 1) %>%
+    dplyr::mutate(pure_strategy = paste0("A",.data$A,"B",.data$B)) %>%
+    dplyr::pull("pure_strategy")
   fb_strategies <- fb_strategies_vec %>% paste(collapse = ", ")
 
   if (output == "solution") {
@@ -237,13 +242,13 @@ get_2x2_game_solutions <- function(payouts, output = "solution") {
     # Get A game type
 
     # get ranks
-    A_ranks <- payouts %>% dplyr::arrange(A, B) %>% dplyr::pull(UA) %>% rank(ties.method = "min") %>%
-      tibble::tibble(rank = ., cell = c("r00", "ropp", "rself", "r11")) %>%
+    A_ranks_prep <- payouts %>% dplyr::arrange(.data$A, .data$B) %>% dplyr::pull("UA") %>% rank(ties.method = "min")
+    A_ranks <-  tibble::tibble(rank = A_ranks_prep, cell = c("r00", "ropp", "rself", "r11")) %>%
       tidyr::pivot_wider(names_from = "cell", values_from = "rank")
 
     # get row from nitratesgame::game_2x2_structures
     A_gametype_df <- A_ranks %>%
-      dplyr::inner_join(game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
+      dplyr::inner_join(nitratesgame::game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
 
     # if row exists, take game abbrev
     if (nrow(A_gametype_df) == 1) {
@@ -252,7 +257,7 @@ get_2x2_game_solutions <- function(payouts, output = "solution") {
     # if row does not exist, flip the ordinal payouts vector and try again
     } else { # check to see if game parameters are reversed
       A_gametype_df <- A_ranks %>% dplyr::rename(r00=r11, rself = ropp, ropp = rself, r11 = r00) %>%
-        dplyr::inner_join(game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
+        dplyr::inner_join(nitratesgame::game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
       if (nrow(A_gametype_df) == 1) {
         A_gametype <- paste0("r",A_gametype_df$abbrev)
 
@@ -263,16 +268,16 @@ get_2x2_game_solutions <- function(payouts, output = "solution") {
     }
 
     # Get B game type
-    B_ranks <- payouts %>% dplyr::arrange(B, A) %>% dplyr::pull(UB) %>% rank(ties.method = "min") %>%
-      tibble::tibble(rank = ., cell = c("r00", "ropp", "rself", "r11")) %>%
+    B_ranks_prep <- payouts %>% dplyr::arrange(.data$B, .data$A) %>% dplyr::pull("UB") %>% rank(ties.method = "min")
+    B_ranks <- tibble::tibble(rank = B_ranks_prep, cell = c("r00", "ropp", "rself", "r11")) %>%
       tidyr::pivot_wider(names_from = "cell", values_from = "rank")
     B_gametype_df <- B_ranks %>%
-      dplyr::inner_join(game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
+      dplyr::inner_join(nitratesgame::game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
     if (nrow(B_gametype_df) == 1) {
       B_gametype <- B_gametype_df$abbrev
     } else { # check to see if game parameters are reversed
       B_gametype_df <- B_ranks %>% dplyr::rename(r00=r11, rself = ropp, ropp = rself, r11 = r00) %>%
-        dplyr::inner_join(game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
+        dplyr::inner_join(nitratesgame::game_2x2_structures, by = c("r00", "rself", "ropp", "r11"))
       if (nrow(B_gametype_df) == 1) {
         B_gametype <- paste0("r",B_gametype_df$abbrev)
       } else {
@@ -299,7 +304,7 @@ get_2x2_game_solutions <- function(payouts, output = "solution") {
 #' Returns a value of 1 (Nash equilibrium), 0 (stable), or -1 (not NE)
 #' @keywords internal
 #' @examples
-#' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3, T)
+#' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3, TRUE)
 #' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3)
 #' \dontrun{
 #' get_2x2_nash_stability(payouts, 4)
@@ -334,9 +339,10 @@ get_2x2_nash_stability <- function(payouts, i) {
 #' @param payouts_list List of payouts from get_2x2_payouts
 #' @param weights Vector used to weight payouts, in order of \code{...}
 #' @export
+#' @importFrom rlang .data
 #' @examples
-#' payouts_i <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3, T)
-#' payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, T)
+#' payouts_i <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3, TRUE)
+#' payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, TRUE)
 #'
 #' weights <- c(0.5, 0.5)
 #' weighted_payouts <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = weights)
@@ -358,22 +364,22 @@ get_2x2_weighted_payouts <- function(payouts_list, weights) {
   weighted_types <- payouts_w_weights %>%
     dplyr::select(c("tA","tB","weight")) %>%
     dplyr::distinct() %>%
-    dplyr::mutate(tAx = paste0(tA," (",weight,")"),
-                     tBx = paste0(tB," (",weight,")")) %>%
-    dplyr::summarize(tA = paste(tAx, collapse = ", "),
-                     tB = paste(tBx, collapse = ", "))
+    dplyr::mutate(tAx = paste0(.data$tA," (",.data$weight,")"),
+                     tBx = paste0(.data$tB," (",.data$weight,")")) %>%
+    dplyr::summarize(tA = paste(.data$tAx, collapse = ", "),
+                     tB = paste(.data$tBx, collapse = ", "))
 
   weighted_payouts <- payouts_w_weights %>%
     dplyr::mutate(tA = weighted_types$tA,
                   tB = weighted_types$tB) %>%
-    dplyr::group_by(A, B, tA, tB) %>%
-    dplyr::summarize(Cs_A = weighted.mean(Cs_A, weight),
-                     Cs_B = weighted.mean(Cs_B, weight),
-                     Cd_A = weighted.mean(Cd_A, weight),
-                     Cd_B = weighted.mean(Cd_B, weight),
-                     UA = weighted.mean(UA, weight),
-                     UB = weighted.mean(UB, weight), .groups = "drop") %>%
-    dplyr::mutate(payouts = paste(UA,UB,sep=", "))
+    dplyr::group_by(.data$A, .data$B, .data$tA, .data$tB) %>%
+    dplyr::summarize(Cs_A = stats::weighted.mean(.data$Cs_A, .data$weight),
+                     Cs_B = stats::weighted.mean(.data$Cs_B, .data$weight),
+                     Cd_A = stats::weighted.mean(.data$Cd_A, .data$weight),
+                     Cd_B = stats::weighted.mean(.data$Cd_B, .data$weight),
+                     UA = stats::weighted.mean(.data$UA, .data$weight),
+                     UB = stats::weighted.mean(.data$UB, .data$weight), .groups = "drop") %>%
+    dplyr::mutate(payouts = paste(.data$UA,.data$UB,sep=", "))
 
   return(weighted_payouts)
 }

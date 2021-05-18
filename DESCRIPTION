@@ -3,9 +3,12 @@ Type: Package
 Title: What the Package Does (Title Case)
 Version: 0.1.0
 Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Maintainer: Gopal Penny <gopalpenny@gmail.com>
+Description: The goal of nitratesgame is to provide a simple framework for analyzing a 
+    game theoretic model of community groundwater contamination. It offers two main tools 
+    for analysis: (i) A tool for generating payout structures and solutions for 2x2 games, 
+    and (ii) A groundwater model for generating simple estimates of the probability of 
+    contamination for a well that sits within a grid of households in a neighborhood.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

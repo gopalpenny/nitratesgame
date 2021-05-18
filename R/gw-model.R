@@ -11,7 +11,9 @@
 #' @details
 #' Returns a rectangle as an sf polygon in theta-phi space
 #' @examples
+#' \dontrun{
 #' get_well_rectangle(0,pi/2,0,pi/6)
+#' }
 get_well_rectangle <- function(theta1, theta2, phi1, phi2) {
   corners <- data.frame(theta=c(theta1, theta1, theta2, theta2),
                         phi = c(phi1, phi2, phi2, phi1))
@@ -58,46 +60,46 @@ get_hh_grid <- function(density, area) {
 
 #' Get septic well array
 #'
-#' @param hh_array array of septic or well systems with coordinates [x, y] as units objects and (optionally) z1, z2, rs
-#' @param hh_array_type either "septic" or "well" describing the \code{hh_array}. See Details below.
+#' @param hh_array array of septic or well systems with coordinates [x, y] as
+#'   units objects and (optionally) z1, z2, rs
+#' @param hh_array_type either "septic" or "well" describing the
+#'   \code{hh_array}. See Details below.
 #' @param ... See details for optional inputs
 #' @export
-#' @description
-#' This function prepares an array of septic systems or private wells for the
-#' groundwater model function \code{get_intersection_probability()}. This
-#' function takes as input an array of septic systems or wells with (x,y)
-#' coordinates where (0,0) is the location of the domestic well.
+#' @description This function prepares an array of septic systems or private
+#' wells for the groundwater model function
+#' \code{get_intersection_probability()}. This function takes as input an array
+#' of septic systems or wells with (x,y) coordinates where (0,0) is the location
+#' of the domestic well.
 #'
 #' Option 1:
 #'
-#' If the goal is to calculate the probability that a single septic system at (0,0)
-#' contaminates any well within a set of wells at (x, y), then \code{hh_array} should
-#' represent a set of wells and \code{hh_array_type} should be set to "wells".
-#' In this case, the x-y locations in \code{hh_array} are kept and each well is
-#' parameterized with with a \code{well_rect}.
+#' If the goal is to calculate the probability that a single septic system at
+#' (0,0) contaminates any well within a set of wells at (x, y), then
+#' \code{hh_array} should represent a set of wells and \code{hh_array_type}
+#' should be set to "wells". In this case, the x-y locations in \code{hh_array}
+#' are kept and each well is parameterized with with a \code{well_rect}.
 #'
 #' Option 2:
 #'
-#' Alternatively, if the goal is to calculate the probability that a single
-#' well at (0,0) is contaminated by any of a set of septic systems at (x, y),
-#' then \code{hh_array} represents septic systems and \code{hh_array_type}
-#' should be set to "septic". In this case, the function translates a set of
-#' point-source septic fields that might contaminate the well into a set of
-#' virtual wells to use with \code{get_intersection_probability()}. Furthermore,
-#' each virtual well is parameterized with with a \code{well_rect}. In order to
-#' calculate the probability of a septic system contaminating a well, the septic
-#' system is treated as a virtual well identical to the actual well and located
-#' directly opposite original septic system at (-xi, -yi). In other words, the
-#' septic array is translated to a well array rotated 180 degrees around the
-#' domestic well. The problem of determining contamination can then be treated
-#' by considering the probability that a particle introduced at (0,0) will
+#' Alternatively, if the goal is to calculate the probability that a single well
+#' at (0,0) is contaminated by any of a set of septic systems at (x, y), then
+#' \code{hh_array} represents septic systems and \code{hh_array_type} should be
+#' set to "septic". In this case, the function translates a set of point-source
+#' septic fields that might contaminate the well into a set of virtual wells to
+#' use with \code{get_intersection_probability()}. Furthermore, each virtual
+#' well is parameterized with with a \code{well_rect}. In order to calculate the
+#' probability of a septic system contaminating a well, the septic system is
+#' treated as a virtual well identical to the actual well and located directly
+#' opposite original septic system at (-xi, -yi). In other words, the septic
+#' array is translated to a well array rotated 180 degrees around the domestic
+#' well. The problem of determining contamination can then be treated by
+#' considering the probability that a particle introduced at (0,0) will
 #' intersect the virtual wells at (-xi, -yi).
-#' @details
-#' Optial input in \code{...} can include:
-#' \itemize{
-#' \item code{z_range}: units vector of length 2 representing depth from the water table surface to the top and bottom of the well
-#' \item \code{rs}: units object representing the radius of the well source area
-#' }
+#' @details Optial input in \code{...} can include: \itemize{ \item
+#' code{z_range}: units vector of length 2 representing depth from the water
+#' table surface to the top and bottom of the well \item \code{rs}: units object
+#' representing the radius of the well source area }
 #' @examples
 #' # Generate household array
 #' library(units)
@@ -109,7 +111,8 @@ get_hh_grid <- function(density, area) {
 #' library(ggplot2)
 #' library(ggforce) # needed to plot axes using units objects
 #' ggplot(mapping = aes(x, y, color = id)) +
-#'   geom_point(data = hh_grid_example, aes(shape = "wells from\nhh_grid_example"), size = 4, stroke = 1) +
+#'   geom_point(data = hh_grid_example, aes(shape = "wells from\nhh_grid_example"),
+#'       size = 4, stroke = 1) +
 #'   geom_point(data = wells, aes(shape = "wells"), size = 2) +
 #'   scale_shape_manual(values = c(16, 1)) +
 #'   scale_color_viridis_c(option = "B") + coord_equal()
@@ -121,7 +124,8 @@ get_hh_grid <- function(density, area) {
 #' library(ggplot2)
 #' library(ggforce) # needed to plot axes using units objects
 #' ggplot(mapping = aes(x, y, color = id)) +
-#'   geom_point(data = hh_grid_example, aes(shape = "septic systems\nfrom hh_grid_example"), size = 4, stroke = 1) +
+#'   geom_point(data = hh_grid_example, aes(shape = "septic systems\nfrom hh_grid_example"),
+#'       size = 4, stroke = 1) +
 #'   geom_point(data = virtual_well_array, aes(shape = "virtual wells"), size = 2) +
 #'   scale_shape_manual(values = c(1, 16)) +
 #'   scale_color_viridis_c(option = "B") + coord_equal()
@@ -301,7 +305,7 @@ get_union_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_r
 #' @param wells_array Wells object prepared with \code{get_septic_well_array}
 #' @param theta_range Vector describing the min and max of the uniform distribution for the mean lateral direction of flow
 #' @param alpha_range Vector describing the min and max of distance to the groundwater divide
-#' @param include_self Logical. If FALSE, any well at (x = 0, y = 0) will be removed
+#' @param self_treat Logical. If \code{TRUE}, any well at (x = 0, y = 0) will be removed
 #' @param return_option Either 1 or 2. See Return, below
 #' @param show_progress Logical that determines if progress bar is shown
 #' @export
@@ -313,7 +317,7 @@ get_union_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_r
 #' @examples
 #' library(units)
 #' wells_array <- get_septic_well_array(hh_grid_example, "septic")
-#' prob <- get_intersection_probability(wells_array)
+#' prob <- get_intersection_probability(wells_array, show_progress = FALSE)
 get_intersection_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_range = c(0, 100), self_treat = FALSE, return_option = 1, show_progress = TRUE) {
   if (max(theta_range) > pi | min(theta_range) < -pi) {
     stop("theta_range must not cross -pi or pi")
@@ -330,21 +334,3 @@ get_intersection_probability <- function(wells_array, theta_range = c(-pi, pi), 
     return(list(wells_array=wells_array, probs=probs))
   }
 }
-
-
-
-# well_rectangle(theta1 = 0, theta2 = 0.04,
-#                phi1 = 0, phi2 = 0.04) %>% st_geometry()
-#
-#
-#
-# hh_grid$pij <- get_pij(hh_grid)
-# p_i <- sum(hh_grid$pij)
-# p_i
-#
-# ggplot(hh_grid) + geom_point(aes(x,y,color=pij)) +
-#   scale_color_viridis_c()
-#
-# df <- tibble(rij = seq(20,200, by = 10), rs = 10, alpha = 100, z1 = 3, z2 = 20)
-# df$pij <- get_pij(df)
-# df

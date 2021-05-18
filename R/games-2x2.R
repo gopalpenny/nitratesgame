@@ -297,11 +297,14 @@ get_2x2_game_solutions <- function(payouts, output = "solution") {
 #' would benefit by switching their action.
 #' @return
 #' Returns a value of 1 (Nash equilibrium), 0 (stable), or -1 (not NE)
+#' @keywords internal
 #' @examples
 #' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3, T)
 #' payouts <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3)
+#' \dontrun{
 #' get_2x2_nash_stability(payouts, 4)
 #' get_2x2_nash_stability(payouts, 1)
+#' }
 get_2x2_nash_stability <- function(payouts, i) {
   # get_2x2_cell_NE <- function()
   # i <- 1

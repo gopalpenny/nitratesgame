@@ -216,7 +216,7 @@ get_2x2_game_solutions <- function(payouts, output = "solution") {
     dplyr::mutate(pure_strategy = paste0("A",A,"B",B)) %>%
     dplyr::pull(pure_strategy)
   nash_strategies <- nash_strategies_vec %>% paste(collapse = ", ")
-  fb_strategies_vec <- payouts %>% rowwise() %>% filter(FB == 1) %>%
+  fb_strategies_vec <- payouts %>% dplyr::rowwise() %>% dplyr::filter(FB == 1) %>%
     dplyr::mutate(pure_strategy = paste0("A",A,"B",B)) %>%
     dplyr::pull(pure_strategy)
   fb_strategies <- fb_strategies_vec %>% paste(collapse = ", ")

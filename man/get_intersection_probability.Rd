@@ -20,11 +20,11 @@ get_intersection_probability(
 
 \item{alpha_range}{Vector describing the min and max of distance to the groundwater divide}
 
+\item{self_treat}{Logical. If \code{TRUE}, any well at (x = 0, y = 0) will be removed}
+
 \item{return_option}{Either 1 or 2. See Return, below}
 
 \item{show_progress}{Logical that determines if progress bar is shown}
-
-\item{include_self}{Logical. If FALSE, any well at (x = 0, y = 0) will be removed}
 }
 \value{
 If return_option = 1: Probability of contamination
@@ -39,5 +39,5 @@ Note that theta_range must not cross -pi or pi.
 \examples{
 library(units)
 wells_array <- get_septic_well_array(hh_grid_example, "septic")
-prob <- get_intersection_probability(wells_array)
+prob <- get_intersection_probability(wells_array, show_progress = FALSE)
 }

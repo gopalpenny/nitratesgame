@@ -4,7 +4,7 @@
 \alias{get_2x2_payouts}
 \title{Get payouts for 2x2 games}
 \usage{
-get_2x2_payouts(tA, tB, Cs, Cd, pos = FALSE, rescale = FALSE)
+get_2x2_payouts(tA, tB, Cs, Cd, pos = FALSE)
 }
 \arguments{
 \item{tA}{Player A type as 1, 2, 3, or 4}
@@ -16,8 +16,6 @@ get_2x2_payouts(tA, tB, Cs, Cd, pos = FALSE, rescale = FALSE)
 \item{Cd}{Cost of contamination of domestic well (positive)}
 
 \item{pos}{If \code{TRUE}, all payouts are shifted by Cs + Cd (prior to any rescaling)}
-
-\item{rescale}{If \code{TRUE}, payouts are rescaled (see details)}
 }
 \value{
 The function returns a tibble containing the following columns:
@@ -34,9 +32,6 @@ The function returns a tibble containing the following columns:
 This function generates a 2x2 payout matrix for players A and B
 given their player type, decision space (upgrade septic or not),
 and associated costs.
-
-If \code{rescale} is \code{TRUE}, payouts are rescaled from
-\code{c(min(A+B)/2, max(A+B)/2)} to \code{c(0, 1)}.
 }
 \examples{
 payouts_pos <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, T)

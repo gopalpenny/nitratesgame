@@ -4,10 +4,14 @@
 \alias{get_2x2_ggplot}
 \title{ggplot Payouts}
 \usage{
-get_2x2_ggplot(payouts, equilibria = FALSE)
+get_2x2_ggplot(payouts, equilibria = FALSE, nsmall = 2)
 }
 \arguments{
 \item{payouts}{Tibble of payouts from get_2x2_payouts}
+
+\item{equilibria}{If \code{TRUE}, highlight equilibria}
+
+\item{nsmall}{Used for rounding payouts}
 }
 \description{
 Generate ggplot of 2x2 payouts

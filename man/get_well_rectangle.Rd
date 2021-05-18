@@ -22,6 +22,8 @@ Get rectangle polygon in theta-phi space from coordinates
 Returns a rectangle as an sf polygon in theta-phi space
 }
 \examples{
+\dontrun{
 get_well_rectangle(0,pi/2,0,pi/6)
+}
 }
 \keyword{internal}

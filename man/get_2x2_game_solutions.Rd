@@ -43,8 +43,9 @@ get_2x2_ggplot(payouts, equilibria = TRUE)
 payouts_ii <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, T)
 
 weights <- c(0.5, 0.5)
-weighted_payouts <- get_2x2_weighted_payouts(list(payouts_i, payouts_ii), weights = weights)
+weighted_payouts <- get_2x2_weighted_payouts(list(payouts, payouts_ii), weights = weights)
 get_2x2_game_solutions(weighted_payouts, "NE")
 get_2x2_game_solutions(weighted_payouts, "FB")
 get_2x2_game_solutions(weighted_payouts, "type")
+get_2x2_game_solutions(weighted_payouts, "dilemma")
 }

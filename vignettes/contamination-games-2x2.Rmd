@@ -24,7 +24,6 @@ library(purrr)
 library(tibble)
 library(ggplot2)
 library(patchwork)
-library(ggnewscale)
 ```
 
 A simple example
@@ -127,6 +126,6 @@ ggplot(mixed_solutions) +
   scale_alpha_manual(values = c(0.4,1)) +
   scale_color_manual(values = c("black", NA)) +
   scale_fill_manual(values = rand_colors26) +
-  facet_grid(config_fct~Cd_lab) + coord_equal() + ggp::t_manu()
+  facet_grid(config_fct~Cd_lab) + coord_equal()
 
 ```

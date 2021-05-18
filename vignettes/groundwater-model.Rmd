@@ -35,7 +35,9 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
 ```{r}
-library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(purrr)
 library(units)
 library(sf)
 library(ggforce)

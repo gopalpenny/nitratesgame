@@ -40,30 +40,31 @@
 
 
 <meta property="og:title" content="Get septic well array — get_septic_well_array" />
-<meta property="og:description" content="This function prepares an array of septic systems or private wells for the
-groundwater model function get_intersection_probability(). This
-function takes as input an array of septic systems or wells with (x,y)
-coordinates where (0,0) is the location of the domestic well.
+<meta property="og:description" content="This function prepares an array of septic systems or private
+wells for the groundwater model function
+get_intersection_probability(). This function takes as input an array
+of septic systems or wells with (x,y) coordinates where (0,0) is the location
+of the domestic well.
 Option 1:
-If the goal is to calculate the probability that a single septic system at (0,0)
-contaminates any well within a set of wells at (x, y), then hh_array should
-represent a set of wells and hh_array_type should be set to &quot;wells&quot;.
-In this case, the x-y locations in hh_array are kept and each well is
-parameterized with with a well_rect.
+If the goal is to calculate the probability that a single septic system at
+(0,0) contaminates any well within a set of wells at (x, y), then
+hh_array should represent a set of wells and hh_array_type
+should be set to &quot;wells&quot;. In this case, the x-y locations in hh_array
+are kept and each well is parameterized with with a well_rect.
 Option 2:
-Alternatively, if the goal is to calculate the probability that a single
-well at (0,0) is contaminated by any of a set of septic systems at (x, y),
-then hh_array represents septic systems and hh_array_type
-should be set to &quot;septic&quot;. In this case, the function translates a set of
-point-source septic fields that might contaminate the well into a set of
-virtual wells to use with get_intersection_probability(). Furthermore,
-each virtual well is parameterized with with a well_rect. In order to
-calculate the probability of a septic system contaminating a well, the septic
-system is treated as a virtual well identical to the actual well and located
-directly opposite original septic system at (-xi, -yi). In other words, the
-septic array is translated to a well array rotated 180 degrees around the
-domestic well. The problem of determining contamination can then be treated
-by considering the probability that a particle introduced at (0,0) will
+Alternatively, if the goal is to calculate the probability that a single well
+at (0,0) is contaminated by any of a set of septic systems at (x, y), then
+hh_array represents septic systems and hh_array_type should be
+set to &quot;septic&quot;. In this case, the function translates a set of point-source
+septic fields that might contaminate the well into a set of virtual wells to
+use with get_intersection_probability(). Furthermore, each virtual
+well is parameterized with with a well_rect. In order to calculate the
+probability of a septic system contaminating a well, the septic system is
+treated as a virtual well identical to the actual well and located directly
+opposite original septic system at (-xi, -yi). In other words, the septic
+array is translated to a well array rotated 180 degrees around the domestic
+well. The problem of determining contamination can then be treated by
+considering the probability that a particle introduced at (0,0) will
 intersect the virtual wells at (-xi, -yi)." />
 
 
@@ -148,30 +149,31 @@ intersect the virtual wells at (-xi, -yi)." />
     </div>
 
     <div class="ref-description">
-    <p>This function prepares an array of septic systems or private wells for the
-groundwater model function <code><a href='get_intersection_probability.html'>get_intersection_probability()</a></code>. This
-function takes as input an array of septic systems or wells with (x,y)
-coordinates where (0,0) is the location of the domestic well.</p>
+    <p>This function prepares an array of septic systems or private
+wells for the groundwater model function
+<code><a href='get_intersection_probability.html'>get_intersection_probability()</a></code>. This function takes as input an array
+of septic systems or wells with (x,y) coordinates where (0,0) is the location
+of the domestic well.</p>
 <p>Option 1:</p>
-<p>If the goal is to calculate the probability that a single septic system at (0,0)
-contaminates any well within a set of wells at (x, y), then <code>hh_array</code> should
-represent a set of wells and <code>hh_array_type</code> should be set to "wells".
-In this case, the x-y locations in <code>hh_array</code> are kept and each well is
-parameterized with with a <code>well_rect</code>.</p>
+<p>If the goal is to calculate the probability that a single septic system at
+(0,0) contaminates any well within a set of wells at (x, y), then
+<code>hh_array</code> should represent a set of wells and <code>hh_array_type</code>
+should be set to "wells". In this case, the x-y locations in <code>hh_array</code>
+are kept and each well is parameterized with with a <code>well_rect</code>.</p>
 <p>Option 2:</p>
-<p>Alternatively, if the goal is to calculate the probability that a single
-well at (0,0) is contaminated by any of a set of septic systems at (x, y),
-then <code>hh_array</code> represents septic systems and <code>hh_array_type</code>
-should be set to "septic". In this case, the function translates a set of
-point-source septic fields that might contaminate the well into a set of
-virtual wells to use with <code><a href='get_intersection_probability.html'>get_intersection_probability()</a></code>. Furthermore,
-each virtual well is parameterized with with a <code>well_rect</code>. In order to
-calculate the probability of a septic system contaminating a well, the septic
-system is treated as a virtual well identical to the actual well and located
-directly opposite original septic system at (-xi, -yi). In other words, the
-septic array is translated to a well array rotated 180 degrees around the
-domestic well. The problem of determining contamination can then be treated
-by considering the probability that a particle introduced at (0,0) will
+<p>Alternatively, if the goal is to calculate the probability that a single well
+at (0,0) is contaminated by any of a set of septic systems at (x, y), then
+<code>hh_array</code> represents septic systems and <code>hh_array_type</code> should be
+set to "septic". In this case, the function translates a set of point-source
+septic fields that might contaminate the well into a set of virtual wells to
+use with <code><a href='get_intersection_probability.html'>get_intersection_probability()</a></code>. Furthermore, each virtual
+well is parameterized with with a <code>well_rect</code>. In order to calculate the
+probability of a septic system contaminating a well, the septic system is
+treated as a virtual well identical to the actual well and located directly
+opposite original septic system at (-xi, -yi). In other words, the septic
+array is translated to a well array rotated 180 degrees around the domestic
+well. The problem of determining contamination can then be treated by
+considering the probability that a particle introduced at (0,0) will
 intersect the virtual wells at (-xi, -yi).</p>
     </div>
 
@@ -182,11 +184,13 @@ intersect the virtual wells at (-xi, -yi).</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>hh_array</th>
-      <td><p>array of septic or well systems with coordinates [x, y] as units objects and (optionally) z1, z2, rs</p></td>
+      <td><p>array of septic or well systems with coordinates [x, y] as
+units objects and (optionally) z1, z2, rs</p></td>
     </tr>
     <tr>
       <th>hh_array_type</th>
-      <td><p>either "septic" or "well" describing the <code>hh_array</code>. See Details below.</p></td>
+      <td><p>either "septic" or "well" describing the
+<code>hh_array</code>. See Details below.</p></td>
     </tr>
     <tr>
       <th>...</th>
@@ -197,8 +201,10 @@ intersect the virtual wells at (-xi, -yi).</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Optial input in <code>...</code> can include:</p><ul>
-<li><p>codez_range: units vector of length 2 representing depth from the water table surface to the top and bottom of the well</p></li>
-<li><p><code>rs</code>: units object representing the radius of the well source area</p></li>
+<li><p>codez_range: units vector of length 2 representing depth from the water
+table surface to the top and bottom of the well</p></li>
+<li><p><code>rs</code>: units object
+representing the radius of the well source area</p></li>
 </ul>
 
 
@@ -213,7 +219,8 @@ intersect the virtual wells at (-xi, -yi).</p>
 <span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://ggplot2.tidyverse.org'>ggplot2</a></span><span class='op'>)</span>
 <span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://ggforce.data-imaginist.com'>ggforce</a></span><span class='op'>)</span> <span class='co'># needed to plot axes using units objects</span>
 <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span><span class='op'>(</span>mapping <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>y</span>, color <span class='op'>=</span> <span class='va'>id</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
-  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_point.html'>geom_point</a></span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>hh_grid_example</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>shape <span class='op'>=</span> <span class='st'>"wells from\nhh_grid_example"</span><span class='op'>)</span>, size <span class='op'>=</span> <span class='fl'>4</span>, stroke <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span> <span class='op'>+</span>
+  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_point.html'>geom_point</a></span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>hh_grid_example</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>shape <span class='op'>=</span> <span class='st'>"wells from\nhh_grid_example"</span><span class='op'>)</span>,
+      size <span class='op'>=</span> <span class='fl'>4</span>, stroke <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span> <span class='op'>+</span>
   <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_point.html'>geom_point</a></span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>wells</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>shape <span class='op'>=</span> <span class='st'>"wells"</span><span class='op'>)</span>, size <span class='op'>=</span> <span class='fl'>2</span><span class='op'>)</span> <span class='op'>+</span>
   <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/scale_manual.html'>scale_shape_manual</a></span><span class='op'>(</span>values <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>16</span>, <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
   <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/scale_viridis.html'>scale_color_viridis_c</a></span><span class='op'>(</span>option <span class='op'>=</span> <span class='st'>"B"</span><span class='op'>)</span> <span class='op'>+</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/coord_fixed.html'>coord_equal</a></span><span class='op'>(</span><span class='op'>)</span>
@@ -225,7 +232,8 @@ intersect the virtual wells at (-xi, -yi).</p>
 <span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='http://ggplot2.tidyverse.org'>ggplot2</a></span><span class='op'>)</span>
 <span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://ggforce.data-imaginist.com'>ggforce</a></span><span class='op'>)</span> <span class='co'># needed to plot axes using units objects</span>
 <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggplot.html'>ggplot</a></span><span class='op'>(</span>mapping <span class='op'>=</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>y</span>, color <span class='op'>=</span> <span class='va'>id</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
-  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_point.html'>geom_point</a></span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>hh_grid_example</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>shape <span class='op'>=</span> <span class='st'>"septic systems\nfrom hh_grid_example"</span><span class='op'>)</span>, size <span class='op'>=</span> <span class='fl'>4</span>, stroke <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span> <span class='op'>+</span>
+  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_point.html'>geom_point</a></span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>hh_grid_example</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>shape <span class='op'>=</span> <span class='st'>"septic systems\nfrom hh_grid_example"</span><span class='op'>)</span>,
+      size <span class='op'>=</span> <span class='fl'>4</span>, stroke <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span> <span class='op'>+</span>
   <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/geom_point.html'>geom_point</a></span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>virtual_well_array</span>, <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/aes.html'>aes</a></span><span class='op'>(</span>shape <span class='op'>=</span> <span class='st'>"virtual wells"</span><span class='op'>)</span>, size <span class='op'>=</span> <span class='fl'>2</span><span class='op'>)</span> <span class='op'>+</span>
   <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/scale_manual.html'>scale_shape_manual</a></span><span class='op'>(</span>values <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>16</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>+</span>
   <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/scale_viridis.html'>scale_color_viridis_c</a></span><span class='op'>(</span>option <span class='op'>=</span> <span class='st'>"B"</span><span class='op'>)</span> <span class='op'>+</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/coord_fixed.html'>coord_equal</a></span><span class='op'>(</span><span class='op'>)</span>

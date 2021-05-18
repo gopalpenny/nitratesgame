@@ -152,11 +152,13 @@ would benefit by switching their action.</p>
     <p>Get 2x2 Nash equilibrium and first best</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='va'>payouts</span> <span class='op'>&lt;-</span> <span class='fu'><a href='get_2x2_payouts.html'>get_2x2_payouts</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, Cs <span class='op'>=</span> <span class='fl'>2</span>, Cd <span class='op'>=</span> <span class='fl'>3</span>, <span class='cn'>T</span><span class='op'>)</span>
+    <pre class="examples"><div class='input'><span class='va'>payouts</span> <span class='op'>&lt;-</span> <span class='fu'><a href='get_2x2_payouts.html'>get_2x2_payouts</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, Cs <span class='op'>=</span> <span class='fl'>2</span>, Cd <span class='op'>=</span> <span class='fl'>3</span>, <span class='cn'>TRUE</span><span class='op'>)</span>
 <span class='va'>payouts</span> <span class='op'>&lt;-</span> <span class='fu'><a href='get_2x2_payouts.html'>get_2x2_payouts</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, Cs <span class='op'>=</span> <span class='fl'>2</span>, Cd <span class='op'>=</span> <span class='fl'>3</span><span class='op'>)</span>
+<span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='fu'>get_2x2_nash_stability</span><span class='op'>(</span><span class='va'>payouts</span>, <span class='fl'>4</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in get_2x2_nash_stability(payouts, 4): could not find function "get_2x2_nash_stability"</span></div><div class='input'><span class='fu'>get_2x2_nash_stability</span><span class='op'>(</span><span class='va'>payouts</span>, <span class='fl'>1</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in get_2x2_nash_stability(payouts, 1): could not find function "get_2x2_nash_stability"</span></div></pre>
+<span class='fu'>get_2x2_nash_stability</span><span class='op'>(</span><span class='va'>payouts</span>, <span class='fl'>1</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

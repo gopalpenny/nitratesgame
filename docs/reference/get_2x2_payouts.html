@@ -42,9 +42,7 @@
 <meta property="og:title" content="Get payouts for 2x2 games — get_2x2_payouts" />
 <meta property="og:description" content="This function generates a 2x2 payout matrix for players A and B
 given their player type, decision space (upgrade septic or not),
-and associated costs.
-If rescale is TRUE, payouts are rescaled from
-c(min(A+B)/2, max(A+B)/2) to c(0, 1)." />
+and associated costs." />
 
 
 
@@ -131,11 +129,9 @@ c(min(A+B)/2, max(A+B)/2) to c(0, 1)." />
     <p>This function generates a 2x2 payout matrix for players A and B
 given their player type, decision space (upgrade septic or not),
 and associated costs.</p>
-<p>If <code>rescale</code> is <code>TRUE</code>, payouts are rescaled from
-<code><a href='https://rdrr.io/r/base/c.html'>c(min(A+B)/2, max(A+B)/2)</a></code> to <code><a href='https://rdrr.io/r/base/c.html'>c(0, 1)</a></code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_2x2_payouts</span><span class='op'>(</span><span class='va'>tA</span>, <span class='va'>tB</span>, <span class='va'>Cs</span>, <span class='va'>Cd</span>, pos <span class='op'>=</span> <span class='cn'>FALSE</span>, rescale <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>get_2x2_payouts</span><span class='op'>(</span><span class='va'>tA</span>, <span class='va'>tB</span>, <span class='va'>Cs</span>, <span class='va'>Cd</span>, pos <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -160,10 +156,6 @@ and associated costs.</p>
       <th>pos</th>
       <td><p>If <code>TRUE</code>, all payouts are shifted by Cs + Cd (prior to any rescaling)</p></td>
     </tr>
-    <tr>
-      <th>rescale</th>
-      <td><p>If <code>TRUE</code>, payouts are rescaled (see details)</p></td>
-    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -179,10 +171,10 @@ and associated costs.</p>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='va'>payouts_pos</span> <span class='op'>&lt;-</span> <span class='fu'>get_2x2_payouts</span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, Cs <span class='op'>=</span> <span class='fl'>1</span>, Cd <span class='op'>=</span> <span class='fl'>2</span>, <span class='cn'>T</span><span class='op'>)</span>
-<span class='va'>payouts_neg</span> <span class='op'>&lt;-</span> <span class='fu'>get_2x2_payouts</span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, Cs <span class='op'>=</span> <span class='fl'>1</span>, Cd <span class='op'>=</span> <span class='fl'>2</span>, <span class='cn'>F</span><span class='op'>)</span>
+    <pre class="examples"><div class='input'><span class='va'>payouts_pos</span> <span class='op'>&lt;-</span> <span class='fu'>get_2x2_payouts</span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, Cs <span class='op'>=</span> <span class='fl'>1</span>, Cd <span class='op'>=</span> <span class='fl'>2</span>, <span class='cn'>TRUE</span><span class='op'>)</span>
+<span class='va'>payouts_neg</span> <span class='op'>&lt;-</span> <span class='fu'>get_2x2_payouts</span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, Cs <span class='op'>=</span> <span class='fl'>1</span>, Cd <span class='op'>=</span> <span class='fl'>2</span>, <span class='cn'>FALSE</span><span class='op'>)</span>
 
-<span class='fu'><a href='get_2x2_ggplot.html'>get_2x2_ggplot</a></span><span class='op'>(</span><span class='va'>payouts_pos</span>, <span class='cn'>T</span><span class='op'>)</span>
+<span class='fu'><a href='get_2x2_ggplot.html'>get_2x2_ggplot</a></span><span class='op'>(</span><span class='va'>payouts_pos</span>, <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='img'><img src='get_2x2_payouts-1.png' alt='' width='700' height='433' /></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

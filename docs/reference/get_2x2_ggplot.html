@@ -127,7 +127,7 @@
     <p>Generate ggplot of 2x2 payouts</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_2x2_ggplot</span><span class='op'>(</span><span class='va'>payouts</span>, equilibria <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>get_2x2_ggplot</span><span class='op'>(</span><span class='va'>payouts</span>, equilibria <span class='op'>=</span> <span class='cn'>FALSE</span>, nsmall <span class='op'>=</span> <span class='fl'>2</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -136,17 +136,25 @@
       <th>payouts</th>
       <td><p>Tibble of payouts from get_2x2_payouts</p></td>
     </tr>
+    <tr>
+      <th>equilibria</th>
+      <td><p>If <code>TRUE</code>, highlight equilibria</p></td>
+    </tr>
+    <tr>
+      <th>nsmall</th>
+      <td><p>Used for rounding payouts</p></td>
+    </tr>
     </table>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='va'>payouts</span> <span class='op'>&lt;-</span> <span class='fu'><a href='get_2x2_payouts.html'>get_2x2_payouts</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, Cs <span class='op'>=</span> <span class='fl'>1</span>, Cd <span class='op'>=</span> <span class='fl'>2</span>, <span class='cn'>T</span><span class='op'>)</span>
+    <pre class="examples"><div class='input'><span class='va'>payouts</span> <span class='op'>&lt;-</span> <span class='fu'><a href='get_2x2_payouts.html'>get_2x2_payouts</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, Cs <span class='op'>=</span> <span class='fl'>1</span>, Cd <span class='op'>=</span> <span class='fl'>2</span>, <span class='cn'>TRUE</span><span class='op'>)</span>
 <span class='fu'>get_2x2_ggplot</span><span class='op'>(</span><span class='va'>payouts</span><span class='op'>)</span>
 </div><div class='img'><img src='get_2x2_ggplot-1.png' alt='' width='700' height='433' /></div><div class='input'>
-<span class='va'>payouts</span> <span class='op'>&lt;-</span> <span class='fu'><a href='get_2x2_payouts.html'>get_2x2_payouts</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, Cs <span class='op'>=</span> <span class='fl'>2</span>, Cd <span class='op'>=</span> <span class='fl'>1</span>, <span class='cn'>T</span><span class='op'>)</span>
+<span class='va'>payouts</span> <span class='op'>&lt;-</span> <span class='fu'><a href='get_2x2_payouts.html'>get_2x2_payouts</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, Cs <span class='op'>=</span> <span class='fl'>2</span>, Cd <span class='op'>=</span> <span class='fl'>1</span>, <span class='cn'>TRUE</span><span class='op'>)</span>
 <span class='fu'>get_2x2_ggplot</span><span class='op'>(</span><span class='va'>payouts</span>, <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='img'><img src='get_2x2_ggplot-2.png' alt='' width='700' height='433' /></div><div class='input'>
-<span class='va'>payouts</span> <span class='op'>&lt;-</span> <span class='fu'><a href='get_2x2_payouts.html'>get_2x2_payouts</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>4</span>, Cs <span class='op'>=</span> <span class='fl'>1</span>, Cd <span class='op'>=</span> <span class='fl'>2</span>, <span class='cn'>T</span><span class='op'>)</span>
+<span class='va'>payouts</span> <span class='op'>&lt;-</span> <span class='fu'><a href='get_2x2_payouts.html'>get_2x2_payouts</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>4</span>, Cs <span class='op'>=</span> <span class='fl'>1</span>, Cd <span class='op'>=</span> <span class='fl'>2</span>, <span class='cn'>TRUE</span><span class='op'>)</span>
 <span class='fu'>get_2x2_ggplot</span><span class='op'>(</span><span class='va'>payouts</span>, <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='img'><img src='get_2x2_ggplot-3.png' alt='' width='700' height='433' /></div></pre>
   </div>

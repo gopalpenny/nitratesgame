@@ -88,17 +88,14 @@
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">nitratesgame</span><span class="op">)</span>
-<span class="co">#&gt; Loading required package: rlang</span></code></pre></div>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">nitratesgame</span><span class="op">)</span></code></pre></div>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyr.tidyverse.org">tidyr</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://purrr.tidyverse.org">purrr</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/r-quantities/units/">units</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/">sf</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggforce.data-imaginist.com">ggforce</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com">patchwork</a></span><span class="op">)</span>
-<span class="co"># getwd()</span></code></pre></div>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/">sf</a></span><span class="op">)</span> <span class="co"># needed for package to represent well capture polygons</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/r-quantities/units/">units</a></span><span class="op">)</span> <span class="co"># needed for package, ensures proper units</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggforce.data-imaginist.com">ggforce</a></span><span class="op">)</span> <span class="co"># for plotting axes with units</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com">patchwork</a></span><span class="op">)</span> <span class="co"># for aligning axes of multiple subplots</span></code></pre></div>
 <div id="groundwater-model" class="section level1">
 <h1 class="hasAnchor">
 <a href="#groundwater-model" class="anchor"></a>Groundwater model</h1>
@@ -121,31 +118,29 @@
 </ul>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Get area of hh withdrawal</span>
-<span class="va">hh_annual</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">76</span>, <span class="st">"gallon/day"</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="co"># from USGS water data</span>
-  <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="st">"ft^3/year"</span><span class="op">)</span> <span class="op">*</span> <span class="fl">4</span>
-<span class="va">precip_annual</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">1070</span>, <span class="st">"mm / year"</span><span class="op">)</span> <span class="co">#%&gt;%</span>
-<span class="va">seepage_fraction</span> <span class="op">&lt;-</span> <span class="fl">0.4</span>
-<span class="va">seepage_annual</span> <span class="op">&lt;-</span> <span class="va">precip_annual</span> <span class="op">*</span> <span class="va">seepage_fraction</span>
-<span class="va">area_of_withdrawal</span> <span class="op">&lt;-</span> <span class="va">hh_annual</span> <span class="op">/</span> <span class="va">seepage_annual</span>
-<span class="va">rs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="va">area_of_withdrawal</span> <span class="op">/</span> <span class="va">pi</span><span class="op">)</span> <span class="op">/</span> <span class="fl">3</span> <span class="co"># CALIBRATED</span>
+<span class="co"># hh_annual &lt;- set_units(76, "gallon/day") %&gt;% # from USGS water data</span>
+<span class="co">#   set_units("ft^3/year") * 4</span>
+<span class="co"># precip_annual &lt;- set_units(1070, "mm / year") #%&gt;%</span>
+<span class="co"># seepage_fraction &lt;- 0.4</span>
+<span class="co"># seepage_annual &lt;- precip_annual * seepage_fraction</span>
+<span class="co"># area_of_withdrawal &lt;- hh_annual / seepage_annual</span>
 
+<span class="co"># wells are screened from 10 ft to 20 ft depth below the water table</span>
+<span class="va">z1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">10</span>,<span class="st">"ft"</span><span class="op">)</span>
+<span class="va">z2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">20</span>,<span class="st">"ft"</span><span class="op">)</span>
 
-<span class="va">density</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="st">"1/acre"</span><span class="op">)</span></code></pre></div>
-<p>Now let’s assume the top of the screened portion of the well is 10 ft below the water table surface. We further assume that the vertical velocity in the aquifer is the seepage rate divided by porosity, and that any contamination is sufficiently diluted after 5 years. This means that we can set the bottom of the well at <code>z2</code>.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">z1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">10</span>,<span class="st">"ft"</span><span class="op">)</span>
-<span class="va">z2</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">seepage_annual</span> <span class="op">/</span> <span class="fl">0.4</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">5</span>, <span class="st">"year"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span> 
-  <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="st">"ft"</span><span class="op">)</span> <span class="co"># wells are at avg depth of X but assume dilution after 5 years</span></code></pre></div>
+<span class="va">rs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">20</span>, <span class="st">"ft"</span><span class="op">)</span> <span class="co"># this is the radius of the region of well capture</span>
+<span class="va">density</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="st">"1/acre"</span><span class="op">)</span> <span class="co"># the housing density</span></code></pre></div>
 <p>Now we need a grid of septic systems. You can create an array of wells yourself or use <code>get_hh_grid</code>. The inputs to <code>get_hh_grid</code> are <code>density</code> and <code>area</code> as units objects.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">area</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">64</span>, <span class="st">"acre"</span><span class="op">)</span>
 <span class="va">hh_array</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_hh_grid.html">get_hh_grid</a></span><span class="op">(</span><span class="va">density</span>, <span class="va">area</span><span class="op">)</span>
 <span class="va">hh_array</span><span class="op">$</span><span class="va">id</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">hh_array</span><span class="op">)</span> <span class="co"># supply an id</span></code></pre></div>
 <p>The groundwater model predicts the probability that a point source will contaminate at least one well in an array of wells. However, in this case we are interested in the probability that an array of septic fields (considered point sources) will lead to contamination in a single well. This problem can be modeled using <code>get_intersection_probability</code> by considering the well as a point source and the septic systems as “virtual wells” such that the spatial relationship between a well and septic system (point source) is the same as the relationship between the virtual well and well (now considered the point source). The function <code>get_septic_well_array</code> does this job for us. See the <code><a href="../reference/get_septic_well_array.html">?get_septic_well_array</a></code> for details.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">virtual_well_array</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_septic_well_array.html">get_septic_well_array</a></span><span class="op">(</span><span class="va">hh_array</span>, <span class="st">"septic"</span>, z_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">z1</span>, <span class="va">z2</span><span class="op">)</span>, rs <span class="op">=</span> <span class="va">rs</span><span class="op">)</span></code></pre></div>
-<p>Here you can see that the virtual well array is identical to the septic array but rotated by 180 degrees.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<p>Here you can see that the virtual well array is identical to the septic array but rotated by 180 degrees around the origin.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggforce.data-imaginist.com">ggforce</a></span><span class="op">)</span> <span class="co"># needed to plot axes using units objects</span>
 <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span>mapping <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, color <span class="op">=</span> <span class="va">id</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
@@ -155,7 +150,7 @@
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html">scale_color_viridis_c</a></span><span class="op">(</span>option <span class="op">=</span> <span class="st">"B"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html">coord_equal</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <p><img src="groundwater-model_files/figure-html/unnamed-chunk-5-1.png" width="576"></p>
 <p>The array <code>virtual_well_array</code> contains sf geometries for each of the wells in <span class="math inline">\(\theta-\phi\)</span> space. We can plot these geometries projected onto the z-axis such that it appears as viewed from the point source at the land surface. To do so we can take <span class="math inline">\(z_{projected}=\sin(\phi)\)</span> and plot using <code>geom_rect</code> from <code>ggplot</code>. We zoom in only on <span class="math inline">\(\theta \in [0,pi/2]\)</span>.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">p_wells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="va">virtual_well_array</span><span class="op">)</span> <span class="op">+</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html">geom_rect</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>xmin <span class="op">=</span> <span class="va">theta1</span>, xmax <span class="op">=</span> <span class="va">theta2</span>, ymin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html">sin</a></span><span class="op">(</span><span class="va">phi1</span><span class="op">)</span>, ymax <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html">sin</a></span><span class="op">(</span><span class="va">phi2</span><span class="op">)</span>, fill <span class="op">=</span> <span class="va">id</span><span class="op">)</span>, color <span class="op">=</span> <span class="cn">NA</span>, alpha <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html">scale_fill_viridis_c</a></span><span class="op">(</span><span class="st">"id"</span><span class="op">)</span> <span class="op">+</span>
@@ -163,7 +158,7 @@
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html">scale_x_continuous</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">pi</span><span class="op">/</span><span class="fl">2</span><span class="op">)</span>, labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"0"</span>, <span class="st">"pi/2"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html">coord_cartesian</a></span><span class="op">(</span>xlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">pi</span><span class="op">/</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span>
 
-<span class="va">p_phi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">50</span>,by<span class="op">=</span><span class="fl">.1</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>phi <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html">atan</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="va">alpha</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> 
+<span class="va">p_phi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">20</span>,by<span class="op">=</span><span class="fl">.1</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>phi <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html">atan</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="va">alpha</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html">stat_density</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Trig.html">sin</a></span><span class="op">(</span><span class="va">phi</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html">scale_x_reverse</a></span><span class="op">(</span><span class="st">"sin(phi)"</span><span class="op">)</span> <span class="op">+</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_flip.html">coord_flip</a></span><span class="op">(</span><span class="op">)</span>
@@ -173,12 +168,47 @@
 <h2 class="hasAnchor">
 <a href="#get-probability" class="anchor"></a>Get probability</h2>
 <p>Now get the probability of contamination of the well, using the virtual well array.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">gw_example</span> <span class="op">&lt;-</span> <span class="va">virtual_well_array</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="../reference/get_intersection_probability.html">get_intersection_probability</a></span><span class="op">(</span>theta_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="va">pi</span><span class="op">/</span><span class="fl">2</span><span class="op">)</span>, alpha_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>,
+  <span class="fu"><a href="../reference/get_intersection_probability.html">get_intersection_probability</a></span><span class="op">(</span>theta_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="va">pi</span><span class="op">/</span><span class="fl">2</span><span class="op">)</span>, alpha_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">20</span><span class="op">)</span>,
                                self_treat <span class="op">=</span> <span class="cn">FALSE</span>, show_progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
 <span class="va">gw_example</span>
-<span class="co">#&gt; [1] NaN</span></code></pre></div>
+<span class="co">#&gt; [1] 0.1225776</span></code></pre></div>
+</div>
+<div id="get-multple-probabilities-at-onces" class="section level2">
+<h2 class="hasAnchor">
+<a href="#get-multple-probabilities-at-onces" class="anchor"></a>Get multple probabilities at onces</h2>
+<p>Now, let’s get probabilities for each row of a <code>tibble</code> which contains columns for all of the appropriate input variables. Note that this must be a <code>tibble</code> and not a <code>data.frame</code>, because it has to store complex objects (i.e., <code>list</code> columns).</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Create a single row with constant parameters</span>
+<span class="va">params_row</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>
+  z1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">10</span>, <span class="st">"ft"</span><span class="op">)</span>,
+  z2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">20</span>, <span class="st">"ft"</span><span class="op">)</span>,
+  area <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fl">64</span>, <span class="st">"acre"</span><span class="op">)</span>,
+  theta_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">pi</span><span class="op">/</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span>, <span class="co"># this will be unlisted in the function</span>
+  alpha_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">20</span><span class="op">)</span><span class="op">)</span>, <span class="co"># this will be unlisted in the function</span>
+  hh_array_type <span class="op">=</span> <span class="st">"septic"</span><span class="op">)</span>
+
+<span class="co"># Add varying parameters</span>
+<span class="va">params_df</span> <span class="op">&lt;-</span> <span class="va">params_row</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/expand.html">crossing</a></span><span class="op">(</span>density <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.5</span><span class="op">)</span>, <span class="st">"1/acre"</span><span class="op">)</span>, 
+           rs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/units/man/set_units.html">set_units</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">20</span><span class="op">)</span>,<span class="st">"ft"</span><span class="op">)</span>, 
+           self_treat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span> <span class="co"># if self_treat is TRUE, a household cannot contaminate its own well</span>
+
+<span class="co"># Get probabilities</span>
+<span class="va">params_df</span><span class="op">$</span><span class="va">probs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_contamination_probabilities.html">get_contamination_probabilities</a></span><span class="op">(</span><span class="va">params_df</span><span class="op">)</span>
+<span class="va">params_df</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"density"</span>, <span class="st">"rs"</span>, <span class="st">"self_treat"</span>, <span class="st">"probs"</span><span class="op">)</span><span class="op">]</span>
+<span class="co">#&gt; # A tibble: 8 x 4</span>
+<span class="co">#&gt;    density    rs self_treat  probs</span>
+<span class="co">#&gt;   [1/acre]  [ft] &lt;lgl&gt;       &lt;dbl&gt;</span>
+<span class="co">#&gt; 1      0.0    10 FALSE      0.05  </span>
+<span class="co">#&gt; 2      0.0    10 TRUE       0     </span>
+<span class="co">#&gt; 3      0.0    20 FALSE      0.100 </span>
+<span class="co">#&gt; 4      0.0    20 TRUE       0     </span>
+<span class="co">#&gt; 5      0.5    10 FALSE      0.0613</span>
+<span class="co">#&gt; 6      0.5    10 TRUE       0.0113</span>
+<span class="co">#&gt; 7      0.5    20 FALSE      0.123 </span>
+<span class="co">#&gt; 8      0.5    20 TRUE       0.0226</span></code></pre></div>
 </div>
 </div>
   </div>
@@ -194,7 +224,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by The package maintainer.</p>
+  <p>Developed by Gopal Penny.</p>
 </div>
 
 <div class="pkgdown">

@@ -37,12 +37,10 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```{r}
 library(dplyr)
 library(tidyr)
-library(purrr)
-library(units)
-library(sf)
-library(ggforce)
-library(patchwork)
-# getwd()
+library(sf) # needed for package to represent well capture polygons
+library(units) # needed for package, ensures proper units
+library(ggforce) # for plotting axes with units
+library(patchwork) # for aligning axes of multiple subplots
 ```
 
 # Groundwater model
@@ -60,24 +58,19 @@ First we set some basic parameters for the scenario including:
 
 ```{r run_gw_model, message = FALSE}
 # Get area of hh withdrawal
-hh_annual <- set_units(76, "gallon/day") %>% # from USGS water data
-  set_units("ft^3/year") * 4
-precip_annual <- set_units(1070, "mm / year") #%>%
-seepage_fraction <- 0.4
-seepage_annual <- precip_annual * seepage_fraction
-area_of_withdrawal <- hh_annual / seepage_annual
-rs <- sqrt(area_of_withdrawal / pi) / 3 # CALIBRATED
+# hh_annual <- set_units(76, "gallon/day") %>% # from USGS water data
+#   set_units("ft^3/year") * 4
+# precip_annual <- set_units(1070, "mm / year") #%>%
+# seepage_fraction <- 0.4
+# seepage_annual <- precip_annual * seepage_fraction
+# area_of_withdrawal <- hh_annual / seepage_annual
 
-
-density <- set_units(0.5, "1/acre")
-```
-
-Now let's assume the top of the screened portion of the well is 10 ft below the water table surface. We further assume that the vertical velocity in the aquifer is the seepage rate divided by porosity, and that any contamination is sufficiently diluted after 5 years. This means that we can set the bottom of the well at `z2`.
-
-```{r prep-well-depth, message = FALSE}
+# wells are screened from 10 ft to 20 ft depth below the water table
 z1 <- set_units(10,"ft")
-z2 <- (seepage_annual / 0.4 * set_units(5, "year")) %>% 
-  set_units("ft") # wells are at avg depth of X but assume dilution after 5 years
+z2 <- set_units(20,"ft")
+
+rs <- set_units(20, "ft") # this is the radius of the region of well capture
+density <- set_units(0.5, "1/acre") # the housing density
 ```
 
 Now we need a grid of septic systems. You can create an array of wells yourself or use `get_hh_grid`. The inputs to `get_hh_grid` are `density` and `area` as units objects.
@@ -95,7 +88,7 @@ The groundwater model predicts the probability that a point source will contamin
 virtual_well_array <- get_septic_well_array(hh_array, "septic", z_range = c(z1, z2), rs = rs)
 ```
 
-Here you can see that the virtual well array is identical to the septic array but rotated by 180 degrees.
+Here you can see that the virtual well array is identical to the septic array but rotated by 180 degrees around the origin.
 
 ```{r fig.width = 6}
 library(ggplot2)
@@ -117,7 +110,7 @@ p_wells <- ggplot(virtual_well_array) +
   scale_x_continuous(breaks = c(0, pi/2), labels = c("0", "pi/2")) +
   coord_cartesian(xlim = c(0, pi/2))
 
-p_phi <- ggplot(data.frame(alpha = seq(0,50,by=.1)) %>% dplyr::mutate(phi = atan(1/alpha))) + 
+p_phi <- ggplot(data.frame(alpha = seq(0,20,by=.1)) %>% dplyr::mutate(phi = atan(1/alpha))) + 
   stat_density(aes(sin(phi))) +
   scale_x_reverse("sin(phi)") + 
   coord_flip()
@@ -130,8 +123,30 @@ Now get the probability of contamination of the well, using the virtual well arr
 
 ```{r}
 gw_example <- virtual_well_array %>%
-  get_intersection_probability(theta_range = c(0,pi/2), alpha_range = c(0, 50),
+  get_intersection_probability(theta_range = c(0,pi/2), alpha_range = c(0, 20),
                                self_treat = FALSE, show_progress = FALSE)
 gw_example
+```
+
+Now, let's get probabilities for each row of a `tibble` which contains columns for all of the appropriate input variables. Note that this must be a `tibble` and not a `data.frame`, because it has to store complex objects (i.e., `list` columns).
+
+```{r}
+# Create a single row with constant parameters
+params_row <- tibble(
+  z1 = set_units(10, "ft"),
+  z2 = set_units(20, "ft"),
+  area = set_units(64, "acre"),
+  theta_range = list(c(0, pi/4)), # this will be unlisted in the function
+  alpha_range = list(c(0, 20))) # this will be unlisted in the function
+
+# Add varying parameters
+params_df <- params_row %>%
+  crossing(density = set_units(c(0, 0.5), "1/acre"), 
+           rs = set_units(c(10, 20),"ft"), 
+           self_treat = c(TRUE, FALSE)) # if self_treat is TRUE, a household cannot contaminate its own well
+
+# Get probabilities
+params_df$probs <- get_contamination_probabilities(params_df)
+params_df
 ```
 

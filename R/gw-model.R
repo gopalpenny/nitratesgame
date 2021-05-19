@@ -74,7 +74,9 @@ get_hh_grid <- function(density, area) {
 #' @export
 #' @description This function prepares an array of septic systems or private
 #' wells for the groundwater model function
-#' \code{get_intersection_probability()}. This function takes as input an array
+#' \code{get_intersection_probability()}.
+#' @details
+#' This function takes as input an array
 #' of septic systems or wells with (x,y) coordinates where (0,0) is the location
 #' of the domestic well.
 #'
@@ -102,9 +104,11 @@ get_hh_grid <- function(density, area) {
 #' well. The problem of determining contamination can then be treated by
 #' considering the probability that a particle introduced at (0,0) will
 #' intersect the virtual wells at (-xi, -yi).
-#' @details Optial input in \code{...} can include: \itemize{ \item
-#' code{z_range}: units vector of length 2 representing depth from the water
-#' table surface to the top and bottom of the well \item \code{rs}: units object
+#'
+#' Optial input in \code{...} can include: \itemize{ \item
+#' \code{z_range}: units vector of length 2 representing depth from the water
+#' table surface to the top and bottom of the well
+#' \item \code{rs}: units object
 #' representing the radius of the well source area }
 #' @examples
 #' # Generate household array
@@ -360,6 +364,7 @@ get_intersection_probability <- function(wells_array, theta_range = c(-pi, pi), 
 #' \item \code{self_treat} is a boolean
 #' \item \code{theta_range} should be in radians as \code{c(theta_min, theta_max)}
 #' \item \code{alpha_range} should be in radians as \code{c(alpha_min, alpha_max)}
+#' \item \code{hh_array_type} character as "septic" or "well" (see \code{get_septic_well_array})
 #' }
 #' @examples
 #' \dontrun{
@@ -372,12 +377,14 @@ get_intersection_probability <- function(wells_array, theta_range = c(-pi, pi), 
 #'   area = set_units(64, "acre"),
 #'   self_treat = TRUE,
 #'   theta_range = list(c(0, pi/4)), # this will be unlisted in the function
-#'   alpha_range = list(c(0, 20))) # this will be unlisted in the function
+#'   alpha_range = list(c(0, 20)), # this will be unlisted in the function
+#'   hh_array_type = "septic")
 #' get_row_contamination_probability(params_row)
 #'
 #' # This function allows multiple rows to be calculated at once
 #' params_df <- params_row %>% dplyr::select(-density, -rs, -self_treat) %>%
-#'   tidyr::crossing(density = set_units(c(0, 1), "1/acre"), rs = set_units(c(10, 20),"ft"), self_treat = c(TRUE, FALSE))
+#'   tidyr::crossing(density = set_units(c(0, 1), "1/acre"),
+#'   rs = set_units(c(10, 20),"ft"), self_treat = c(TRUE, FALSE))
 #'
 #' # use sapply to get all probabilities at once
 #' params_df$probs <- sapply(split(params_df, 1:nrow(params_df)), get_row_contamination_probability)
@@ -385,9 +392,9 @@ get_intersection_probability <- function(wells_array, theta_range = c(-pi, pi), 
 #' }
 get_row_contamination_probability <- function(params_row) {
   # define parameters
-  if (!all(c("z1", "z2", "rs", "density", "area", "self_treat", "theta_range", "alpha_range") %in%
+  if (!all(c("z1", "z2", "rs", "density", "area", "self_treat", "theta_range", "alpha_range", "hh_array_type") %in%
       names(params_row))) {
-    stop("params_row must contain all names elements z1, z2, rs, density, area, self_treat, theta_range, alpha_range")
+    stop("params_row must contain all names elements z1, z2, rs, density, area, self_treat, theta_range, alpha_range, hh_array_type")
   }
   z1 <- params_row$z1
   z2 <- params_row$z2
@@ -397,6 +404,7 @@ get_row_contamination_probability <- function(params_row) {
   self_treat <- params_row$self_treat
   theta_range <- params_row$theta_range
   alpha_range <- params_row$alpha_range
+  hh_array_type <- params_row$hh_array_type
 
   if (!all(sapply(params_row[c("z1", "z2", "rs", "density", "area")],class) == "units")) {
     stop("All of z1, z2, rs, density, and area must be specified as units objects class")
@@ -411,7 +419,7 @@ get_row_contamination_probability <- function(params_row) {
   }
 
   hh_array <- get_hh_grid(density, area)
-  virtual_well_array <- get_septic_well_array(hh_array, "septic", z_range = c(z1, z2), rs = rs)
+  virtual_well_array <- get_septic_well_array(hh_array, hh_array_type, z_range = c(z1, z2), rs = rs)
   prob <- get_intersection_probability(virtual_well_array,
                                        theta_range = theta_range, alpha_range = alpha_range,
                                        self_treat = self_treat, show_progress = FALSE)
@@ -431,6 +439,7 @@ get_row_contamination_probability <- function(params_row) {
 #' \item \code{self_treat} is a boolean
 #' \item \code{theta_range} should be in radians as \code{c(theta_min, theta_max)}
 #' \item \code{alpha_range} should be in radians as \code{c(alpha_min, alpha_max)}
+#' \item \code{hh_array_type} character as "septic" or "well" (see \code{get_septic_well_array})
 #' }
 #' @examples
 #' library(units)
@@ -440,11 +449,13 @@ get_row_contamination_probability <- function(params_row) {
 #'   z2 = set_units(20, "ft"),
 #'   area = set_units(64, "acre"),
 #'   theta_range = list(c(0, pi/4)), # this will be unlisted in the function
-#'   alpha_range = list(c(0, 20))) # this will be unlisted in the function
+#'   alpha_range = list(c(0, 20)), # this will be unlisted in the function
+#'   hh_array_type = "septic")
 #'
 #' # This function allows multiple rows to be calculated at once
 #' params_df <- params_row %>%
-#'   crossing(density = set_units(c(0, 0.5), "1/acre"), rs = set_units(c(10, 20),"ft"), self_treat = c(TRUE, FALSE))
+#'   crossing(density = set_units(c(0, 0.5), "1/acre"),
+#'   rs = set_units(c(10, 20),"ft"), self_treat = c(TRUE, FALSE))
 #'
 #' params_df$probs <- get_contamination_probabilities(params_df)
 #' params_df

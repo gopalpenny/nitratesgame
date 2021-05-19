@@ -21,6 +21,7 @@ Get probabilities of contamination
 \item \code{self_treat} is a boolean
 \item \code{theta_range} should be in radians as \code{c(theta_min, theta_max)}
 \item \code{alpha_range} should be in radians as \code{c(alpha_min, alpha_max)}
+\item \code{hh_array_type} character as "septic" or "well" (see \code{get_septic_well_array})
 }
 }
 \examples{
@@ -31,11 +32,13 @@ params_row <- tibble(
   z2 = set_units(20, "ft"),
   area = set_units(64, "acre"),
   theta_range = list(c(0, pi/4)), # this will be unlisted in the function
-  alpha_range = list(c(0, 20))) # this will be unlisted in the function
+  alpha_range = list(c(0, 20)), # this will be unlisted in the function
+  hh_array_type = "septic")
 
 # This function allows multiple rows to be calculated at once
 params_df <- params_row \%>\%
-  crossing(density = set_units(c(0, 0.5), "1/acre"), rs = set_units(c(10, 20),"ft"), self_treat = c(TRUE, FALSE))
+  crossing(density = set_units(c(0, 0.5), "1/acre"),
+  rs = set_units(c(10, 20),"ft"), self_treat = c(TRUE, FALSE))
 
 params_df$probs <- get_contamination_probabilities(params_df)
 params_df

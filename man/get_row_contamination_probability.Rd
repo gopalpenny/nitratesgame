@@ -19,6 +19,7 @@ Get probability of contamination of row
 \item \code{self_treat} is a boolean
 \item \code{theta_range} should be in radians as \code{c(theta_min, theta_max)}
 \item \code{alpha_range} should be in radians as \code{c(alpha_min, alpha_max)}
+\item \code{hh_array_type} character as "septic" or "well" (see \code{get_septic_well_array})
 }
 }
 \examples{
@@ -32,12 +33,14 @@ params_row <- tibble(
   area = set_units(64, "acre"),
   self_treat = TRUE,
   theta_range = list(c(0, pi/4)), # this will be unlisted in the function
-  alpha_range = list(c(0, 20))) # this will be unlisted in the function
+  alpha_range = list(c(0, 20)), # this will be unlisted in the function
+  hh_array_type = "septic")
 get_row_contamination_probability(params_row)
 
 # This function allows multiple rows to be calculated at once
 params_df <- params_row \%>\% dplyr::select(-density, -rs, -self_treat) \%>\%
-  tidyr::crossing(density = set_units(c(0, 1), "1/acre"), rs = set_units(c(10, 20),"ft"), self_treat = c(TRUE, FALSE))
+  tidyr::crossing(density = set_units(c(0, 1), "1/acre"),
+  rs = set_units(c(10, 20),"ft"), self_treat = c(TRUE, FALSE))
 
 # use sapply to get all probabilities at once
 params_df$probs <- sapply(split(params_df, 1:nrow(params_df)), get_row_contamination_probability)

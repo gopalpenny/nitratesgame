@@ -6,7 +6,8 @@ params_row <- tibble::tibble(
   z2 = set_units(20, "ft"),
   area = set_units(64, "acre"),
   theta_range = list(c(0, pi/4)), # this will be unlisted in the function
-  alpha_range = list(c(0, 20))) # this will be unlisted in the function
+  alpha_range = list(c(0, 20)), # this will be unlisted in the function
+  hh_array_type = "septic")
 
 # Add varying parameters
 params_df <- params_row %>%

@@ -18,7 +18,10 @@ units objects and (optionally) z1, z2, rs}
 \description{
 This function prepares an array of septic systems or private
 wells for the groundwater model function
-\code{get_intersection_probability()}. This function takes as input an array
+\code{get_intersection_probability()}.
+}
+\details{
+This function takes as input an array
 of septic systems or wells with (x,y) coordinates where (0,0) is the location
 of the domestic well.
 
@@ -46,11 +49,11 @@ array is translated to a well array rotated 180 degrees around the domestic
 well. The problem of determining contamination can then be treated by
 considering the probability that a particle introduced at (0,0) will
 intersect the virtual wells at (-xi, -yi).
-}
-\details{
+
 Optial input in \code{...} can include: \itemize{ \item
-code{z_range}: units vector of length 2 representing depth from the water
-table surface to the top and bottom of the well \item \code{rs}: units object
+\code{z_range}: units vector of length 2 representing depth from the water
+table surface to the top and bottom of the well
+\item \code{rs}: units object
 representing the radius of the well source area }
 }
 \examples{

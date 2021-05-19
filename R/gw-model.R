@@ -46,10 +46,15 @@ get_hh_grid <- function(density, area) {
   # Create mxm grid of septic fields around a well at m/2,m/2.
   # The total number of wells (N) determined by the number of houses in 9 connected pixels
   density_acre <- units::set_units(density, "1/acre")
-  N <- as.numeric(density_acre * units::set_units(area, "acre"))
-  m <- round(sqrt(N))
+  area_acre <- units::set_units(area, "acre")
+  N <- max(c(1, as.numeric(density_acre * area_acre))) # total number of wells (1 minimum)
+  m <- round(sqrt(N)) # m x m wells
 
-  l <- (1/density) %>% units::set_units("ft^2") %>% sqrt() # l is length of square of each property
+  if (1/density_acre > area_acre) {
+    density_acre <- 1 / area_acre
+  }
+
+  l <- (1/density_acre) %>% units::set_units("ft^2") %>% sqrt() # %>% as.numeric() # l is length of square of each property
 
   hh_grid <- expand.grid(col=seq(-ceiling(m/2)+1,m/2),row=seq(-ceiling(m/2)+1,m/2))
   hh_grid$x = hh_grid$col * l
@@ -166,15 +171,14 @@ get_septic_well_array <- function(hh_array, hh_array_type, ...) {
   # wells$phi2 <- ifelse(wells$origin, pi/2, as.numeric(atan(wells$z2 / wells$rij)))
   # wells$well_rect <- mapply(get_well_rectangle,theta1 = wells$theta1, theta2 = wells$theta2, phi1 = wells$phi1, phi2 = wells$phi2)
 
-  wells <- wells %>%
-    dplyr::mutate(theta = as.numeric(atan2(.data$y, .data$x)),
-                  dtheta = atan(as.numeric(.data$rs/.data$rij)), # this is the width of the well
-                  origin = ifelse(as.numeric(.data$x) == 0, as.numeric(.data$y) == 0, FALSE),
-                  theta1 = ifelse(.data$origin, -pi, .data$theta - .data$dtheta),
-                  theta2 = ifelse(.data$origin, pi, .data$theta + .data$dtheta),
-                  phi1 = ifelse(.data$origin, as.numeric(atan(.data$z1 / .data$rs)), as.numeric(atan(.data$z1 / .data$rij))),
-                  phi2 = ifelse(.data$origin, pi/2, as.numeric(atan(.data$z2 / .data$rij)))) %>% tibble::as_tibble() %>%
-    dplyr::rowwise() %>%
+  wells$theta <- as.numeric(atan2(wells$y, wells$x))
+  wells$dtheta <- atan(as.numeric(wells$rs/wells$rij)) # this is the width of the well
+  wells$origin <- ifelse(as.numeric(wells$x) == 0, as.numeric(wells$y) == 0, FALSE)
+  wells$theta1 <- ifelse(wells$origin, -pi, wells$theta - wells$dtheta)
+  wells$theta2 <- ifelse(wells$origin, pi, wells$theta + wells$dtheta)
+  wells$phi1 <- ifelse(wells$origin, as.numeric(atan(wells$z1 / wells$rs)), as.numeric(atan(wells$z1 / wells$rij)))
+  wells$phi2 <- ifelse(wells$origin, pi/2, as.numeric(atan(wells$z2 / wells$rij)))
+  wells <- wells %>% tibble::as_tibble() %>% dplyr::rowwise() %>%
     dplyr::mutate(well_rect = get_well_rectangle(.data$theta1, .data$theta2, .data$phi1, .data$phi2))
 
   return(wells)
@@ -263,13 +267,12 @@ get_union_probability <- function(wells_array, theta_range = c(-pi, pi), alpha_r
                  remove = ifelse(is.na(.data$remove),FALSE,.data$remove)) %>%
           dplyr::filter(!remove)
         if (i == 1 & j == 1) {
-          combined_rectangles <-
-            with(wells_phi_break_pts,
-                 data.frame(theta1 = min(.data$X), theta2 = max(.data$X), phi1 = min(.data$Y), phi2 = max(.data$Y)))
+          combined_rectangles <- data.frame(theta1 = min(wells_phi_break_pts$X), theta2 = max(wells_phi_break_pts$X),
+                                            phi1 = min(wells_phi_break_pts$Y), phi2 = max(wells_phi_break_pts$Y))
         } else {
           combined_rectangles <- combined_rectangles %>%
-            rbind(with(wells_phi_break_pts,
-                       data.frame(theta1 = min(.data$X), theta2 = max(.data$X), phi1 = min(.data$Y), phi2 = max(.data$Y))))
+            rbind(data.frame(theta1 = min(wells_phi_break_pts$X), theta2 = max(wells_phi_break_pts$X),
+                             phi1 = min(wells_phi_break_pts$Y), phi2 = max(wells_phi_break_pts$Y)))
         }
 
         # ggplot() + geom_sf(data=wells_phi_break,aes(),fill="gray") + ylim(c(0,0.1))
@@ -329,11 +332,130 @@ get_intersection_probability <- function(wells_array, theta_range = c(-pi, pi), 
   if (self_treat) {
     wells_array <- wells_array %>% dplyr::filter(as.numeric(.data$rij) > 0)
   }
-  wells_array <- shift_hh_grid_pi(wells_array, theta_range = theta_range)
-  probs <- get_union_probability(wells_array, theta_range = theta_range, alpha_range = alpha_range, show_progress = show_progress)
+
+  # if there are no wells left, set probs = 0
+  if (nrow(wells_array) == 0) {
+    probs <- list(p=0)
+  } else {
+    wells_array <- shift_hh_grid_pi(wells_array, theta_range = theta_range)
+    probs <- get_union_probability(wells_array, theta_range = theta_range, alpha_range = alpha_range, show_progress = show_progress)
+  }
+
   if (return_option == 1) {
     return(sum(probs$p))
   } else if (return_option == 2) {
     return(list(wells_array=wells_array, probs=probs))
   }
+}
+
+
+
+#' Get probability of contamination of row
+#' @param params_row \code{list} or \code{tibble} row with appropriate names variables (see details)
+#' @keywords internal
+#' @details
+#' \code{params_row} must contain the following named variables:
+#' \itemize{
+#' \item \code{z1}, \code{z2},  \code{rs}, \code{density}, \code{area} must be \code{units} objects.
+#' \item \code{self_treat} is a boolean
+#' \item \code{theta_range} should be in radians as \code{c(theta_min, theta_max)}
+#' \item \code{alpha_range} should be in radians as \code{c(alpha_min, alpha_max)}
+#' }
+#' @examples
+#' \dontrun{
+#' library(units)
+#' params_row <- tibble(
+#'   z1 = set_units(10, "ft"),
+#'   z2 = set_units(20, "ft"),
+#'   rs = set_units(15, "ft"),
+#'   density = set_units(1, "1/acre"),
+#'   area = set_units(64, "acre"),
+#'   self_treat = TRUE,
+#'   theta_range = list(c(0, pi/4)), # this will be unlisted in the function
+#'   alpha_range = list(c(0, 20))) # this will be unlisted in the function
+#' get_row_contamination_probability(params_row)
+#'
+#' # This function allows multiple rows to be calculated at once
+#' params_df <- params_row %>% dplyr::select(-density, -rs, -self_treat) %>%
+#'   tidyr::crossing(density = set_units(c(0, 1), "1/acre"), rs = set_units(c(10, 20),"ft"), self_treat = c(TRUE, FALSE))
+#'
+#' # use sapply to get all probabilities at once
+#' params_df$probs <- sapply(split(params_df, 1:nrow(params_df)), get_row_contamination_probability)
+#' params_df
+#' }
+get_row_contamination_probability <- function(params_row) {
+  # define parameters
+  if (!all(c("z1", "z2", "rs", "density", "area", "self_treat", "theta_range", "alpha_range") %in%
+      names(params_row))) {
+    stop("params_row must contain all names elements z1, z2, rs, density, area, self_treat, theta_range, alpha_range")
+  }
+  z1 <- params_row$z1
+  z2 <- params_row$z2
+  density <- params_row$density
+  area <- params_row$area
+  rs <- params_row$rs
+  self_treat <- params_row$self_treat
+  theta_range <- params_row$theta_range
+  alpha_range <- params_row$alpha_range
+
+  if (!all(sapply(params_row[c("z1", "z2", "rs", "density", "area")],class) == "units")) {
+    stop("All of z1, z2, rs, density, and area must be specified as units objects class")
+  }
+
+  # unless theta_range and alpha_range, if necessary
+  if (class(theta_range) == "list") {
+    theta_range <- theta_range[[1]]
+  }
+  if (class(alpha_range) == "list") {
+    alpha_range <- alpha_range[[1]]
+  }
+
+  hh_array <- get_hh_grid(density, area)
+  virtual_well_array <- get_septic_well_array(hh_array, "septic", z_range = c(z1, z2), rs = rs)
+  prob <- get_intersection_probability(virtual_well_array,
+                                       theta_range = theta_range, alpha_range = alpha_range,
+                                       self_treat = self_treat, show_progress = FALSE)
+  return(prob)
+}
+
+
+
+#' Get probabilities of contamination
+#' @param params_df \code{tibble} with appropriate columns (see details)
+#' @param show_progress boolean, whether or not to show progress bar
+#' @export
+#' @details
+#' \code{params_df} must contain the following named columns:
+#' \itemize{
+#' \item \code{z1}, \code{z2},  \code{rs}, \code{density}, \code{area} must be \code{units} objects.
+#' \item \code{self_treat} is a boolean
+#' \item \code{theta_range} should be in radians as \code{c(theta_min, theta_max)}
+#' \item \code{alpha_range} should be in radians as \code{c(alpha_min, alpha_max)}
+#' }
+#' @examples
+#' library(units)
+#' library(tidyr)
+#' params_row <- tibble(
+#'   z1 = set_units(10, "ft"),
+#'   z2 = set_units(20, "ft"),
+#'   area = set_units(64, "acre"),
+#'   theta_range = list(c(0, pi/4)), # this will be unlisted in the function
+#'   alpha_range = list(c(0, 20))) # this will be unlisted in the function
+#'
+#' # This function allows multiple rows to be calculated at once
+#' params_df <- params_row %>%
+#'   crossing(density = set_units(c(0, 0.5), "1/acre"), rs = set_units(c(10, 20),"ft"), self_treat = c(TRUE, FALSE))
+#'
+#' params_df$probs <- get_contamination_probabilities(params_df)
+#' params_df
+get_contamination_probabilities <- function(params_df, show_progress = FALSE) {
+
+  if (show_progress) {pb <- utils::txtProgressBar(min = 1, max = nrow(params_df), style = 3)}
+
+  probs <- NULL
+  for (i in 1:nrow(params_df)) {
+    if(show_progress) {utils::setTxtProgressBar(pb, i)}
+    probs[i] <- get_row_contamination_probability(params_df[i,])
+  }
+  return(probs)
 }

@@ -6,6 +6,12 @@ notifications:
   email:
     recipients:
       - gopalpenny@gmail.com
+addons:
+  apt:
+    packages:
+      - libudunits2-dev
+      - libgdal-dev
+      - libproj-dev
 after_success:
   - Rscript -e 'covr::codecov()'
 

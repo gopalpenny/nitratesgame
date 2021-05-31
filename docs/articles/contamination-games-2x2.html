@@ -95,8 +95,8 @@
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com">patchwork</a></span><span class="op">)</span></code></pre></div>
 <p>A simple example</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">payouts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_2x2_payouts.html">get_2x2_payouts</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>
-<span class="fu"><a href="../reference/get_2x2_ggplot.html">get_2x2_ggplot</a></span><span class="op">(</span><span class="va">payouts</span>, <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">payouts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_2x2_payouts.html">get_2x2_payouts</a></span><span class="op">(</span>tA <span class="op">=</span> <span class="fl">1</span>, tB <span class="op">=</span> <span class="fl">1</span>, Cs <span class="op">=</span> <span class="fl">2</span>, Cd <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="co"># tA, tB - player types. Cs - cost to upgrade septic. Cd - cost of domestic well contamination</span>
+<span class="fu"><a href="../reference/get_2x2_ggplot.html">get_2x2_ggplot</a></span><span class="op">(</span><span class="va">payouts</span>, equilibria <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># equilibria = TRUE will show the Nash Equilibrium (red outline) and Social Optimum (blue fill)</span></code></pre></div>
 <p><img src="contamination-games-2x2_files/figure-html/unnamed-chunk-2-1.png" width="288"></p>
 <p>Matrices of games</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">

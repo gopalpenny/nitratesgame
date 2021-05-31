@@ -25,3 +25,25 @@ test_that("get_2x2_weighted_payouts works for multiple probabilities", {
   expect_equal(weighted_payouts_75_25, weighted_payouts_75_25_output)
   expect_equal(weighted_payouts_100_00, weighted_payouts_100_00_output)
 })
+
+
+# payouts_gg <- get_2x2_payouts(3, 3, Cs = 1, Cd = 2, TRUE)
+
+test_that("get_2x2_ggplot returns ggplot object",{
+  expect_equal(class(get_2x2_ggplot(payouts_i)), c("gg","ggplot"))
+  expect_equal(class(get_2x2_ggplot(payouts_i, TRUE)), c("gg","ggplot"))
+})
+
+
+payouts_iii <- get_2x2_payouts(3, 3, Cs = 2, Cd = 3)
+payouts_iv <- get_2x2_payouts(3, 1, Cs = 2, Cd = 3, TRUE)
+
+weights <- c(0.5, 0.5)
+weighted_payouts <- get_2x2_weighted_payouts(list(payouts_iii, payouts_iv), weights = weights)
+
+test_that("get_2x2_game_solutions works for NE, FB, type, dilemma",{
+  expect_equal(get_2x2_game_solutions(weighted_payouts, "NE"),"A0B0")
+  expect_equal(get_2x2_game_solutions(weighted_payouts, "FB"),"A1B0")
+  expect_equal(get_2x2_game_solutions(weighted_payouts, "type"),"Dl-Pd")
+  expect_equal(get_2x2_game_solutions(weighted_payouts, "dilemma"),"social dilemma")
+})

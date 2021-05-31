@@ -25,7 +25,8 @@ Suggests:
     gridExtra,
     tibble,
     ggforce,
-    purrr
+    purrr,
+    covr
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
 Imports: 

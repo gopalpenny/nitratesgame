@@ -2,3 +2,10 @@
 
 language: R
 cache: packages
+notifications:
+  email:
+    recipients:
+      - gopalpenny@gmail.com
+after_success:
+  - Rscript -e 'covr::codecov()'
+

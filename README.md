@@ -7,6 +7,8 @@
 
 [![Travis build
 status](https://travis-ci.com/gopalpenny/nitratesgame.svg?branch=master)](https://travis-ci.com/gopalpenny/nitratesgame)
+[![Codecov test
+coverage](https://codecov.io/gh/gopalpenny/nitratesgame/branch/master/graph/badge.svg)](https://codecov.io/gh/gopalpenny/nitratesgame?branch=master)
 <!-- badges: end -->
 
 The goal of nitratesgame is to provide a simple framework for analyzing

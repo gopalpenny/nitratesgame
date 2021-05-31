@@ -29,8 +29,8 @@ library(patchwork)
 A simple example
 
 ```{r fig.width = 3, fig.height = 1.5}
-payouts <- get_2x2_payouts(1, 1, 2, 3)
-get_2x2_ggplot(payouts, TRUE)
+payouts <- get_2x2_payouts(tA = 1, tB = 1, Cs = 2, Cd = 3) # tA, tB - player types. Cs - cost to upgrade septic. Cd - cost of domestic well contamination
+get_2x2_ggplot(payouts, equilibria = TRUE) # equilibria = TRUE will show the Nash Equilibrium (red outline) and Social Optimum (blue fill)
 ```
 
 Matrices of games

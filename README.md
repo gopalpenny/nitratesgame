@@ -5,6 +5,8 @@
 
 <!-- badges: start -->
 
+[![Travis build
+status](https://travis-ci.com/gopalpenny/nitratesgame.svg?branch=master)](https://travis-ci.com/gopalpenny/nitratesgame)
 <!-- badges: end -->
 
 The goal of nitratesgame is to provide a simple framework for analyzing

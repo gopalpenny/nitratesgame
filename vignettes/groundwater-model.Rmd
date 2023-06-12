@@ -128,7 +128,7 @@ gw_example <- virtual_well_array %>%
 gw_example
 ```
 
-## Get multple probabilities at onces
+## Get multiple probabilities at once
 
 Now, let's get probabilities for each row of a `tibble` which contains columns for all of the appropriate input variables. Note that this must be a `tibble` and not a `data.frame`, because it has to store complex objects (i.e., `list` columns).
 

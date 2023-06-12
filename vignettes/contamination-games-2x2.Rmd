@@ -1,5 +1,5 @@
 ---
-title: "contamination-games-2x2"
+title: "Contamination games: 2x2"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{contamination-games-2x2}

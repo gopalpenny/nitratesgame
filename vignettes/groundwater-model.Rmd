@@ -1,5 +1,5 @@
 ---
-title: "groundwater-model"
+title: "Groundwater model"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{groundwater-model}
@@ -19,16 +19,16 @@ library(nitratesgame)
 ```
 
 
----
-title: "nitrates_gw_predictions"
-author: "Gopal Penny"
-date: "10/27/2020"
-output: 
-  html_notebook:
-    toc: true
-    number_sections: true
-    code_folding: hide
----
+<!-- --- -->
+<!-- title: "Groundwater model" -->
+<!-- author: "Gopal Penny" -->
+<!-- date: "10/27/2020" -->
+<!-- output:  -->
+<!--   html_notebook: -->
+<!--     toc: true -->
+<!--     number_sections: true -->
+<!--     code_folding: hide -->
+<!-- --- -->
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
